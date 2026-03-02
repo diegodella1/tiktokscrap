@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #08090d;
+            color: #c4c9d4;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .login-card {
+            width: 360px;
+            background: #10121a;
+            border: 1px solid #1c1f2e;
+            border-radius: 12px;
+            padding: 2.5rem 2rem 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .brand {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .brand-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #ff3b5c, #ff6b81);
+            border-radius: 12px;
+            margin-bottom: 0.8rem;
+        }
+        .brand-icon svg { width: 24px; height: 24px; fill: #fff; }
+        .brand h1 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: #8b90a0;
+            text-transform: uppercase;
+        }
+        .field { margin-bottom: 1rem; }
+        .field label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: #6b7080;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        .field input {
+            width: 100%;
+            padding: 0.65rem 0.8rem;
+            background: #0c0d14;
+            border: 1px solid #1c1f2e;
+            border-radius: 6px;
+            color: #e0e4ec;
+            font-family: inherit;
+            font-size: 0.88rem;
+            transition: border-color 0.2s;
+        }
+        .field input:focus { outline: none; border-color: #ff3b5c; }
+        .field input::placeholder { color: #3a3d4c; }
+        .submit-btn {
+            width: 100%;
+            padding: 0.7rem;
+            background: #ff3b5c;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 0.5rem;
+        }
+        .submit-btn:hover { background: #e63350; }
+        .error-msg {
+            background: rgba(255, 59, 92, 0.08);
+            border: 1px solid rgba(255, 59, 92, 0.2);
+            border-radius: 6px;
+            padding: 0.5rem 0.7rem;
+            color: #ff6b81;
+            font-size: 0.78rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <form class="login-card" method="POST" action="/login">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            </div>
+            <h1>TikTok Monitor</h1>
+        </div>
+        {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+        <div class="field">
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" placeholder="Ingresa el password" autofocus>
+        </div>
+        <button type="submit" class="submit-btn">Ingresar</button>
+    </form>
+</body>
+</html>

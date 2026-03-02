@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ── Reset ──────────────────────────────────────── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        :root {
+            --bg-base: #08090d;
+            --bg-raised: #10121a;
+            --bg-surface: #161824;
+            --border: #1c1f2e;
+            --border-hover: #2a2d40;
+            --text-primary: #e0e4ec;
+            --text-secondary: #8b90a0;
+            --text-muted: #555868;
+            --text-faint: #3a3d4c;
+            --accent: #ff3b5c;
+            --accent-hover: #e63350;
+            --accent-muted: rgba(255, 59, 92, 0.12);
+            --green: #22c55e;
+            --green-muted: rgba(34,197,94,0.12);
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 10px;
+        }
+        body {
+            background: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        ::selection { background: var(--accent-muted); color: #fff; }
+
+        /* ── Top Bar ────────────────────────────────────── */
+        .topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(8,9,13,0.85);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            height: 44px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+        .topbar-brand {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.78rem; font-weight: 700; letter-spacing: 1.5px;
+            color: var(--text-primary); text-transform: uppercase;
+        }
+        .topbar-brand .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent);
+        }
+        .topbar-metrics { display: flex; gap: 1.2rem; }
+        .metric {
+            display: flex; align-items: center; gap: 0.3rem;
+            font-size: 0.7rem; color: var(--text-muted);
+        }
+        .metric .mv { color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.68rem; }
+        .metric .mv--live { color: var(--green); }
+        .topbar-right { display: flex; align-items: center; gap: 0.5rem; }
+        .status-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--text-faint); display: inline-block;
+        }
+        .status-dot--ok { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.3); }
+        .status-dot--scanning { background: var(--accent); animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,59,92,0.3); }
+            50% { opacity: 0.5; box-shadow: 0 0 0 8px rgba(255,59,92,0); }
+        }
+
+        /* ── Buttons ────────────────────────────────────── */
+        .btn {
+            padding: 0.35rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--bg-raised);
+            color: var(--text-secondary);
+            font-family: var(--font-body);
+            font-size: 0.75rem; font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        .btn:hover { border-color: var(--border-hover); color: var(--text-primary); text-decoration: none; }
+        .btn-primary {
+            background: var(--accent); border-color: var(--accent);
+            color: #fff; font-weight: 600;
+        }
+        .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        .btn-sm { padding: 0.25rem 0.55rem; font-size: 0.7rem; }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+        /* ── Layout ─────────────────────────────────────── */
+        .page { max-width: 920px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; }
+
+        /* ── Control Strip ──────────────────────────────── */
+        .control-strip {
+            display: flex; align-items: center; gap: 0.8rem;
+            background: var(--bg-raised); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 0.6rem 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .cs-label {
+            font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--text-muted); margin-right: auto;
+        }
+        .auto-pill {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px; font-size: 0.68rem; font-weight: 600;
+            letter-spacing: 0.3px;
+            background: var(--bg-surface); border: 1px solid var(--border);
+            color: var(--text-muted);
+            cursor: pointer; user-select: none;
+            transition: all 0.2s;
+        }
+        .auto-pill.on {
+            background: var(--green-muted); border-color: rgba(34,197,94,0.25);
+            color: var(--green);
+        }
+        .auto-pill.off {
+            background: rgba(255,59,92,0.08); border-color: rgba(255,59,92,0.2);
+            color: #f87171;
+        }
+        .auto-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--text-faint);
+        }
+        .auto-pill.on .auto-dot { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+        .auto-pill.off .auto-dot { background: #f87171; }
+        .interval-input {
+            display: flex; align-items: center; gap: 0.3rem;
+            font-size: 0.72rem; color: var(--text-muted);
+        }
+        .interval-input input {
+            width: 3.2rem; padding: 0.2rem 0.3rem;
+            background: var(--bg-base); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-primary);
+            font-family: var(--font-mono); font-size: 0.72rem; text-align: center;
+            transition: border-color 0.15s;
+        }
+        .interval-input input:focus { outline: none; border-color: var(--accent); }
+        .scan-wrap { display: flex; align-items: center; gap: 0.5rem; }
+        .scan-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            display: none;
+        }
+        .scan-dot.active { display: block; background: var(--accent); animation: pulse 1s infinite; }
+
+        /* ── Section ────────────────────────────────────── */
+        .section { margin-bottom: 1.5rem; }
+        .section-head {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 0.6rem;
+        }
+        .section-label {
+            font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--text-muted);
+        }
+        .section-badge {
+            font-size: 0.62rem; font-family: var(--font-mono);
+            color: var(--text-faint); background: var(--bg-surface);
+            padding: 0.1rem 0.4rem; border-radius: var(--radius-sm);
+        }
+
+        /* ── Accounts ───────────────────────────────────── */
+        .add-row { display: flex; gap: 0.4rem; margin-bottom: 0.6rem; }
+        .add-row input {
+            flex: 1; padding: 0.4rem 0.7rem;
+            background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: var(--radius-md); color: var(--text-primary);
+            font-family: var(--font-body); font-size: 0.82rem;
+            transition: border-color 0.15s;
+        }
+        .add-row input:focus { outline: none; border-color: var(--accent); }
+        .add-row input::placeholder { color: var(--text-faint); }
+        .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.3rem 0.55rem;
+            background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: var(--radius-md); font-size: 0.75rem;
+            transition: border-color 0.15s;
+        }
+        .chip:hover { border-color: var(--border-hover); }
+        .chip-user { color: var(--text-primary); font-weight: 500; }
+        .chip-n {
+            font-family: var(--font-mono); font-size: 0.62rem;
+            color: var(--text-muted); background: var(--bg-base);
+            padding: 0.05rem 0.3rem; border-radius: 3px;
+        }
+        .chip-x {
+            color: var(--text-faint); cursor: pointer;
+            font-size: 0.9rem; line-height: 1;
+            transition: color 0.15s;
+        }
+        .chip-x:hover { color: var(--accent); }
+
+        /* ── Avatars ───────────────────────────────────── */
+        .avatar {
+            width: 20px; height: 20px; border-radius: 50%;
+            object-fit: cover; flex-shrink: 0;
+        }
+        .avatar--card { width: 24px; height: 24px; }
+        .avatar-fallback {
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 50%; flex-shrink: 0;
+            background: var(--bg-base); border: 1px solid var(--border);
+            color: var(--text-muted); font-weight: 600;
+            font-size: 0.58rem; text-transform: uppercase;
+        }
+        .avatar-fallback--chip { width: 20px; height: 20px; }
+        .avatar-fallback--card { width: 24px; height: 24px; font-size: 0.65rem; }
+        .avatar-fallback--ftag { width: 16px; height: 16px; font-size: 0.5rem; }
+        .avatar--ftag { width: 16px; height: 16px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+
+        /* ── Stats Row ─────────────────────────────────── */
+        .t-stats {
+            display: flex; gap: 1rem; flex-wrap: wrap;
+            font-family: var(--font-mono); font-size: 0.7rem;
+            color: var(--text-muted); margin-bottom: 0.6rem;
+        }
+        .t-stat { display: inline-flex; align-items: center; gap: 0.25rem; }
+        .t-stat-icon { font-style: normal; }
+
+        .empty-msg {
+            color: var(--text-faint); font-size: 0.78rem;
+            text-align: center; padding: 0.8rem;
+            border: 1px dashed var(--border); border-radius: var(--radius-md);
+        }
+
+        /* ── Filters ────────────────────────────────────── */
+        .filters { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+        .ftag {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.25rem 0.55rem;
+            background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted); font-size: 0.7rem; font-weight: 500;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .ftag:hover { border-color: var(--border-hover); color: var(--text-secondary); }
+        .ftag.on {
+            border-color: var(--accent); color: var(--accent);
+            background: var(--accent-muted);
+        }
+        .ftag-n {
+            font-family: var(--font-mono); font-size: 0.58rem;
+            padding: 0.05rem 0.25rem; border-radius: 3px;
+            background: rgba(255,255,255,0.04); color: var(--text-faint);
+        }
+        .ftag.on .ftag-n { background: rgba(255,59,92,0.15); color: var(--accent); }
+
+        /* ── Timeline ───────────────────────────────────── */
+        .timeline { display: flex; flex-direction: column; gap: 1px; }
+        .t-card {
+            background: var(--bg-raised); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 1rem 1.1rem;
+            transition: border-color 0.15s;
+            animation: fadeUp 0.2s ease-out;
+            display: flex; gap: 1rem;
+        }
+        .t-card:hover { border-color: var(--border-hover); }
+        .t-card-body { flex: 1; min-width: 0; }
+        .t-thumb {
+            width: 100px; height: 130px; object-fit: cover;
+            border-radius: var(--radius-md); flex-shrink: 0;
+            background: var(--bg-surface);
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* card top row */
+        .t-row1 {
+            display: flex; align-items: flex-start;
+            justify-content: space-between; gap: 0.6rem;
+            margin-bottom: 0.5rem;
+        }
+        .t-user {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            font-size: 0.78rem; font-weight: 600; color: var(--accent);
+            background: var(--accent-muted);
+            padding: 0.15rem 0.5rem; border-radius: var(--radius-sm);
+            flex-shrink: 0;
+        }
+
+        /* TZ 2x2 compact grid */
+        .t-tz {
+            display: grid; grid-template-columns: auto auto;
+            gap: 0.1rem 0.9rem;
+            font-family: var(--font-mono); font-size: 0.62rem;
+            color: var(--text-faint); text-align: right; flex-shrink: 0;
+        }
+        .t-tz b { color: var(--text-muted); font-weight: 500; }
+
+        /* description */
+        .t-desc {
+            font-size: 0.82rem; line-height: 1.75; color: var(--text-secondary);
+            word-break: break-word; white-space: pre-wrap;
+            margin-bottom: 0.6rem;
+        }
+
+        /* footer */
+        .t-foot { display: flex; justify-content: flex-end; }
+        .t-link {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.25rem 0.6rem;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            color: var(--text-muted); font-size: 0.68rem; font-weight: 500;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .t-link:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+
+        /* ── Empty ──────────────────────────────────────── */
+        .empty-feed {
+            text-align: center; padding: 3rem 1rem;
+            border: 1px dashed var(--border); border-radius: var(--radius-lg);
+            color: var(--text-faint);
+        }
+        .empty-feed strong { display: block; color: var(--text-muted); margin-bottom: 0.3rem; font-size: 0.88rem; }
+        .empty-feed span { font-size: 0.72rem; }
+
+        /* ── Load more ──────────────────────────────────── */
+        .more-wrap { text-align: center; margin-top: 1rem; }
+
+        /* ── Tabs ──────────────────────────────────────── */
+        .tabs {
+            display: flex; gap: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .tab-btn {
+            padding: 0.6rem 1.2rem;
+            background: none; border: none; border-bottom: 2px solid transparent;
+            color: var(--text-muted); font-family: var(--font-body);
+            font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; transition: all 0.15s;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .tab-btn:hover { color: var(--text-secondary); }
+        .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--accent); }
+        .tab-btn.active.ig { border-bottom-color: #e1306c; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── Instagram accent ─────────────────────────── */
+        .ig .t-user {
+            color: #e1306c;
+            background: rgba(225,48,108,0.12);
+        }
+        .ig .ftag.on {
+            border-color: #e1306c; color: #e1306c;
+            background: rgba(225,48,108,0.12);
+        }
+        .ig .ftag.on .ftag-n { background: rgba(225,48,108,0.15); color: #e1306c; }
+        .ig .btn-primary {
+            background: #e1306c; border-color: #e1306c;
+        }
+        .ig .btn-primary:hover { background: #c4275c; border-color: #c4275c; }
+        .ig .auto-pill.on {
+            background: var(--green-muted); border-color: rgba(34,197,94,0.25);
+            color: var(--green);
+        }
+        .ig .t-link:hover { border-color: #e1306c; color: #e1306c; }
+        .topbar-sep {
+            width: 1px; height: 16px;
+            background: var(--border); margin: 0 0.3rem;
+        }
+
+        /* ── Responsive ─────────────────────────────────── */
+        @media (max-width: 640px) {
+            .topbar { padding: 0 1rem; }
+            .topbar-metrics { display: none; }
+            .page { padding: 1rem 1rem 3rem; }
+            .control-strip { flex-wrap: wrap; }
+            .cs-label { width: 100%; margin-bottom: 0.2rem; }
+            .t-row1 { flex-direction: column; gap: 0.3rem; }
+            .t-tz { text-align: left; }
+            .add-row { flex-direction: column; }
+            .t-thumb { width: 72px; height: 96px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ── Top Bar ──────────────────────────────────── -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-brand">
+                <span class="dot"></span> TikTok Monitor
+            </div>
+            <div class="topbar-metrics">
+                <span class="metric">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span>TT:</span>
+                    <span class="mv" id="statusLastScan">--</span>
+                </span>
+                <span class="metric">
+                    <span>Cuentas:</span>
+                    <span class="mv mv--live" id="statusAccounts">0</span>
+                </span>
+                <span class="metric">
+                    <span>Posts:</span>
+                    <span class="mv mv--live" id="statusPosts">0</span>
+                </span>
+                <!-- IG metrics disabled
+                <span class="topbar-sep"></span>
+                <span class="metric">
+                    <span class="status-dot" id="igStatusDot"></span>
+                    <span>IG:</span>
+                    <span class="mv" id="igStatusLastScan">--</span>
+                </span>
+                <span class="metric">
+                    <span>Cuentas:</span>
+                    <span class="mv mv--live" id="igStatusAccounts">0</span>
+                </span>
+                <span class="metric">
+                    <span>Posts:</span>
+                    <span class="mv mv--live" id="igStatusPosts">0</span>
+                </span>
+                -->
+            </div>
+        </div>
+        <div class="topbar-right">
+            <a href="/docs" class="btn btn-sm">Docs</a>
+            <a href="/logout" class="btn btn-sm">Salir</a>
+        </div>
+    </div>
+
+    <div class="page">
+        <!-- ── Tabs (Instagram disabled — rate limit inviable) ── -->
+        <!--
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tiktok', this)">TikTok</button>
+            <button class="tab-btn ig" onclick="switchTab('instagram', this)">Instagram</button>
+        </div>
+        -->
+
+        <!-- ══ TikTok Tab ══════════════════════════════ -->
+        <div class="tab-content active" id="tiktokTab">
+            <div class="control-strip">
+                <span class="cs-label">Scanner TikTok</span>
+                <span class="auto-pill" id="autoPill" onclick="toggleAuto()" title="Click para activar/desactivar">
+                    <span class="auto-dot" id="autoDot"></span>
+                    <span id="autoLabel">--</span>
+                </span>
+                <div class="interval-input">
+                    <span>cada</span>
+                    <input type="number" id="intervalInput" min="1" max="1440" value="30" onchange="setInterval_()">
+                    <span>min</span>
+                </div>
+                <div class="scan-wrap">
+                    <span class="scan-dot" id="scanIndicator"></span>
+                    <button class="btn" id="refreshBtn" onclick="doRefresh()" title="Recargar datos de la DB">&#8635; Refrescar</button>
+                    <button class="btn btn-primary" id="scanBtn" onclick="doScan()">Escanear ahora</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <span class="section-label">Cuentas monitoreadas</span>
+                    <span class="section-badge" id="accountCountBadge">0</span>
+                </div>
+                <div class="add-row">
+                    <input type="text" id="usernameInput" placeholder="@username" onkeydown="if(event.key==='Enter')addAccount()">
+                    <button class="btn" onclick="addAccount()">Agregar</button>
+                </div>
+                <div class="chips" id="accountList">
+                    <div class="empty-msg">Sin cuentas. Agrega una para empezar.</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <span class="section-label">Timeline</span>
+                    <span class="section-badge" id="postsShownBadge">0</span>
+                </div>
+                <div class="filters" id="filterBar">
+                    <span class="ftag on" data-user="" onclick="filterPosts(this,'')">Todos</span>
+                </div>
+                <div class="timeline" id="postsFeed">
+                    <div class="empty-feed">
+                        <strong>Sin posts todavia</strong>
+                        <span>Agrega cuentas y ejecuta un scan.</span>
+                    </div>
+                </div>
+                <div class="more-wrap">
+                    <button class="btn btn-sm" id="loadMoreBtn" onclick="loadMore()" style="display:none;">Cargar mas</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ Instagram Tab ═══════════════════════════ -->
+        <div class="tab-content ig" id="instagramTab">
+            <div class="control-strip">
+                <span class="cs-label">Scanner Instagram</span>
+                <span class="auto-pill" id="igAutoPill" onclick="igToggleAuto()" title="Click para activar/desactivar">
+                    <span class="auto-dot" id="igAutoDot"></span>
+                    <span id="igAutoLabel">--</span>
+                </span>
+                <div class="interval-input">
+                    <span>cada</span>
+                    <input type="number" id="igIntervalInput" min="1" max="1440" value="30" onchange="igSetInterval()">
+                    <span>min</span>
+                </div>
+                <div class="scan-wrap">
+                    <span class="scan-dot" id="igScanIndicator"></span>
+                    <button class="btn" id="igRefreshBtn" onclick="igDoRefresh()" title="Recargar datos de la DB">&#8635; Refrescar</button>
+                    <button class="btn btn-primary" id="igScanBtn" onclick="igDoScan()">Escanear ahora</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <span class="section-label">Cuentas monitoreadas</span>
+                    <span class="section-badge" id="igAccountCountBadge">0</span>
+                </div>
+                <div class="add-row">
+                    <input type="text" id="igUsernameInput" placeholder="@username" onkeydown="if(event.key==='Enter')igAddAccount()">
+                    <button class="btn" onclick="igAddAccount()">Agregar</button>
+                </div>
+                <div class="chips" id="igAccountList">
+                    <div class="empty-msg">Sin cuentas IG. Agrega una para empezar.</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <span class="section-label">Timeline</span>
+                    <span class="section-badge" id="igPostsShownBadge">0</span>
+                </div>
+                <div class="filters" id="igFilterBar">
+                    <span class="ftag on" data-user="" onclick="igFilterPosts(this,'')">Todos</span>
+                </div>
+                <div class="timeline" id="igPostsFeed">
+                    <div class="empty-feed">
+                        <strong>Sin reels todavia</strong>
+                        <span>Agrega cuentas IG y ejecuta un scan.</span>
+                    </div>
+                </div>
+                <div class="more-wrap">
+                    <button class="btn btn-sm" id="igLoadMoreBtn" onclick="igLoadMore()" style="display:none;">Cargar mas</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ══════════════════════════════════════════════════
+        // TABS
+        // ══════════════════════════════════════════════════
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tab-btn').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+            btn.classList.add('active');
+            document.getElementById(tab === 'instagram' ? 'instagramTab' : 'tiktokTab').classList.add('active');
+        }
+
+        // ══════════════════════════════════════════════════
+        // SHARED HELPERS
+        // ══════════════════════════════════════════════════
+        async function api(path, opts) {
+            opts = opts || {};
+            var res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+            if (res.status === 401) { window.location = '/login'; return null; }
+            return res.json();
+        }
+
+        function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+        function fmtCompact(n) {
+            if (n == null) return '--';
+            if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+            return String(n);
+        }
+
+        var TZ_LIST = [
+            { label: 'AR', tz: 'America/Argentina/Buenos_Aires' },
+            { label: 'SF', tz: 'America/Los_Angeles' },
+            { label: 'LDN', tz: 'Europe/London' },
+            { label: 'HK', tz: 'Asia/Hong_Kong' }
+        ];
+
+        function formatMultiTZ(s) {
+            if (!s) return '';
+            var d = s.includes('T') ? new Date(s) : new Date(s + 'Z');
+            if (isNaN(d.getTime())) return '';
+            return TZ_LIST.map(function(t) {
+                var f = d.toLocaleString('en-GB', {
+                    timeZone: t.tz, day: '2-digit', month: 'short',
+                    hour: '2-digit', minute: '2-digit', hour12: false
+                });
+                return '<span><b>' + t.label + '</b> ' + f + '</span>';
+            }).join('');
+        }
+
+        function timeAgo(s) {
+            if (!s) return '';
+            var d = new Date(s + 'Z');
+            var diff = Math.floor((Date.now() - d.getTime()) / 1000);
+            if (diff < 60) return 'ahora';
+            if (diff < 3600) return 'hace ' + Math.floor(diff / 60) + 'm';
+            if (diff < 86400) return 'hace ' + Math.floor(diff / 3600) + 'h';
+            return 'hace ' + Math.floor(diff / 86400) + 'd';
+        }
+
+        function avatarFallbackHtml(username, sz) {
+            var initial = username ? username.charAt(0).toUpperCase() : '?';
+            return '<span class="avatar-fallback avatar-fallback--' + sz + '">' + initial + '</span>';
+        }
+
+        function makeAvatarHtml(username, cls, avatarMap) {
+            var url = avatarMap[username];
+            var sz = cls || 'chip';
+            if (url) {
+                var safeUser = escapeHtml(username).replace(/'/g, "\\'");
+                return '<img class="avatar avatar--' + sz + '" src="' + escapeHtml(url) + '" alt="" onerror="this.outerHTML=avatarFallbackHtml(\'' + safeUser + '\',\'' + sz + '\')">';
+            }
+            return avatarFallbackHtml(username, sz);
+        }
+
+        const PAGE_SIZE = 50;
+
+        // ══════════════════════════════════════════════════
+        // TIKTOK
+        // ══════════════════════════════════════════════════
+        var currentFilter = '';
+        var currentOffset = 0;
+        var isScanning = false;
+        var accountPostCounts = {};
+        var accountAvatars = {};
+        var totalPostsInDB = 0;
+        var postsShown = 0;
+        var _accountUsernames = [];
+
+        function avatarHtml(username, cls) { return makeAvatarHtml(username, cls, accountAvatars); }
+
+        async function loadStatus() {
+            var data = await api('/api/status');
+            if (!data) return;
+            var lastEl = document.getElementById('statusLastScan');
+            var dotEl = document.getElementById('statusDot');
+            // If a scan is running (started by anyone), show progress
+            var p = data.scan_progress;
+            if (p && p.running) {
+                _showScanProgress(p);
+                _startScanPolling();
+            } else if (isScanning && !_scanPollTimer) {
+                // Scan just finished between polls
+                _resetScanUI();
+            }
+            if (data.last_scan) {
+                lastEl.textContent = timeAgo(data.last_scan.finished_at) + ' (' + data.last_scan.new_posts + ' nuevos)';
+                if (!isScanning) dotEl.className = 'status-dot status-dot--ok';
+            } else {
+                lastEl.textContent = 'nunca';
+                if (!isScanning) dotEl.className = 'status-dot';
+            }
+            document.getElementById('intervalInput').value = data.interval_minutes;
+            var pill = document.getElementById('autoPill');
+            var label = document.getElementById('autoLabel');
+            if (data.auto_scan) {
+                pill.className = 'auto-pill on';
+                label.textContent = 'Auto ON';
+            } else {
+                pill.className = 'auto-pill off';
+                label.textContent = 'Auto OFF';
+            }
+        }
+
+        async function setInterval_() {
+            var mins = parseInt(document.getElementById('intervalInput').value, 10);
+            if (!mins || mins < 1 || mins > 1440) return;
+            await api('/api/interval', { method: 'POST', body: JSON.stringify({ minutes: mins }) });
+            loadStatus();
+        }
+
+        async function loadAccounts() {
+            var accounts = await api('/api/accounts');
+            if (!accounts) return;
+            accountAvatars = {};
+            _accountUsernames = [];
+            accounts.forEach(function(a) {
+                _accountUsernames.push(a.username);
+                if (a.avatar_url) accountAvatars[a.username] = a.avatar_url;
+            });
+            document.getElementById('statusAccounts').textContent = _accountUsernames.length;
+            document.getElementById('accountCountBadge').textContent = _accountUsernames.length;
+            renderChips();
+            updateFilterBar(_accountUsernames);
+            fetchPostCounts(_accountUsernames);
+        }
+
+        function renderChips() {
+            var list = document.getElementById('accountList');
+            if (_accountUsernames.length === 0) {
+                list.innerHTML = '<div class="empty-msg">Sin cuentas. Agrega una para empezar.</div>';
+                return;
+            }
+            list.innerHTML = _accountUsernames.map(function(u) {
+                var c = accountPostCounts[u] !== undefined ? accountPostCounts[u] : '-';
+                return '<span class="chip">' + avatarHtml(u, 'chip') +
+                    '<span class="chip-user">@' + u + '</span>' +
+                    '<span class="chip-n">' + c + '</span>' +
+                    '<span class="chip-x" onclick="removeAccount(\'' + u + '\')">&times;</span></span>';
+            }).join('');
+        }
+
+        async function fetchPostCounts(accounts) {
+            var data = await api('/api/posts/counts');
+            if (!data) return;
+            accountPostCounts = data.counts || {};
+            totalPostsInDB = data.total || 0;
+            accounts.forEach(function(u) {
+                if (!(u in accountPostCounts)) accountPostCounts[u] = 0;
+            });
+            document.getElementById('statusPosts').textContent = totalPostsInDB;
+            renderChips();
+            updateFilterBadges();
+        }
+
+        function updateFilterBadges() {
+            document.querySelectorAll('#filterBar .ftag').forEach(function(t) {
+                var u = t.getAttribute('data-user');
+                var b = t.querySelector('.ftag-n');
+                if (!b) return;
+                b.textContent = u === '' ? totalPostsInDB : (accountPostCounts[u] || 0);
+            });
+        }
+
+        async function addAccount() {
+            var input = document.getElementById('usernameInput');
+            var u = input.value.trim();
+            if (!u) return;
+            await api('/api/accounts', { method: 'POST', body: JSON.stringify({ username: u }) });
+            input.value = '';
+            loadAccounts();
+        }
+
+        async function removeAccount(u) {
+            if (!confirm('Eliminar @' + u + ' y todos sus posts?')) return;
+            await api('/api/accounts/' + u, { method: 'DELETE' });
+            loadAccounts();
+            loadPosts();
+        }
+
+        function updateFilterBar(accounts) {
+            var bar = document.getElementById('filterBar');
+            var tb = totalPostsInDB || '-';
+            bar.innerHTML = '<span class="ftag ' + (currentFilter === '' ? 'on' : '') +
+                '" data-user="" onclick="filterPosts(this,\'\')">Todos <span class="ftag-n">' + tb + '</span></span>';
+            accounts.forEach(function(u) {
+                var c = accountPostCounts[u] !== undefined ? accountPostCounts[u] : '-';
+                bar.innerHTML += '<span class="ftag ' + (currentFilter === u ? 'on' : '') +
+                    '" data-user="' + u + '" onclick="filterPosts(this,\'' + u + '\')">' +
+                    avatarHtml(u, 'ftag') + ' @' + u +
+                    ' <span class="ftag-n">' + c + '</span></span>';
+            });
+        }
+
+        function filterPosts(el, u) {
+            currentFilter = u;
+            currentOffset = 0;
+            document.querySelectorAll('#filterBar .ftag').forEach(function(t) { t.classList.remove('on'); });
+            el.classList.add('on');
+            loadPosts();
+        }
+
+        function statsHtml(p) {
+            if (p.view_count == null && p.like_count == null && p.comment_count == null && p.repost_count == null) return '';
+            return '<div class="t-stats">' +
+                '<span class="t-stat"><span class="t-stat-icon">&#128065;</span> ' + fmtCompact(p.view_count) + '</span>' +
+                '<span class="t-stat"><span class="t-stat-icon">&#10084;</span> ' + fmtCompact(p.like_count) + '</span>' +
+                '<span class="t-stat"><span class="t-stat-icon">&#128172;</span> ' + fmtCompact(p.comment_count) + '</span>' +
+                '<span class="t-stat"><span class="t-stat-icon">&#128260;</span> ' + fmtCompact(p.repost_count) + '</span>' +
+            '</div>';
+        }
+
+        async function loadPosts(append) {
+            var params = new URLSearchParams({ limit: PAGE_SIZE, offset: currentOffset });
+            if (currentFilter) params.set('username', currentFilter);
+            var posts = await api('/api/posts?' + params);
+            if (!posts) return;
+            var feed = document.getElementById('postsFeed');
+            var html = posts.map(function(p) {
+                var tz = formatMultiTZ(p.post_date || p.discovered_at);
+                var desc = p.description ? '<div class="t-desc">' + escapeHtml(p.description) + '</div>' : '';
+                var thumb = p.thumbnail_url ? '<img class="t-thumb" src="' + escapeHtml(p.thumbnail_url) + '" alt="" loading="lazy">' : '';
+                return '<div class="t-card">' +
+                    '<div class="t-card-body">' +
+                        '<div class="t-row1">' +
+                            '<span class="t-user">' + avatarHtml(p.username, 'card') + ' @' + escapeHtml(p.username) + '</span>' +
+                            '<div class="t-tz">' + tz + '</div>' +
+                        '</div>' + desc + statsHtml(p) +
+                        '<div class="t-foot">' +
+                            '<a class="t-link" href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">Abrir en TikTok &#8599;</a>' +
+                        '</div>' +
+                    '</div>' + thumb +
+                '</div>';
+            }).join('');
+            if (append) { feed.innerHTML += html; postsShown += posts.length; }
+            else if (html) { feed.innerHTML = html; postsShown = posts.length; }
+            else { feed.innerHTML = '<div class="empty-feed"><strong>Sin posts todavia</strong><span>Agrega cuentas y ejecuta un scan.</span></div>'; postsShown = 0; }
+            document.getElementById('postsShownBadge').textContent = postsShown;
+            document.getElementById('loadMoreBtn').style.display = posts.length >= PAGE_SIZE ? '' : 'none';
+        }
+
+        function loadMore() { currentOffset += PAGE_SIZE; loadPosts(true); }
+
+        var _scanPollTimer = null;
+
+        function _startScanPolling() {
+            if (_scanPollTimer) return;
+            _scanPollTimer = window.setInterval(async function() {
+                var data = await api('/api/status');
+                if (!data) return;
+                var p = data.scan_progress;
+                if (p && p.running) {
+                    _showScanProgress(p);
+                } else {
+                    _stopScanPolling();
+                    _resetScanUI();
+                    loadPosts(); loadStatus(); loadAccounts();
+                }
+            }, 3000);
+        }
+
+        function _stopScanPolling() {
+            if (_scanPollTimer) { clearInterval(_scanPollTimer); _scanPollTimer = null; }
+        }
+
+        function _showScanProgress(p) {
+            var btn = document.getElementById('scanBtn');
+            var ind = document.getElementById('scanIndicator');
+            var dot = document.getElementById('statusDot');
+            btn.disabled = true;
+            btn.textContent = '@' + p.current_user + ' (' + p.current + '/' + p.total + ')';
+            ind.classList.add('active');
+            dot.className = 'status-dot status-dot--scanning';
+            isScanning = true;
+        }
+
+        function _resetScanUI() {
+            var btn = document.getElementById('scanBtn');
+            var ind = document.getElementById('scanIndicator');
+            btn.disabled = false; btn.textContent = 'Escanear ahora';
+            ind.classList.remove('active'); isScanning = false;
+        }
+
+        async function doScan() {
+            var btn = document.getElementById('scanBtn');
+            var ind = document.getElementById('scanIndicator');
+            var dot = document.getElementById('statusDot');
+            btn.disabled = true; btn.textContent = 'Escaneando...';
+            ind.classList.add('active'); dot.className = 'status-dot status-dot--scanning';
+            isScanning = true;
+            var result = await api('/api/scan', { method: 'POST' });
+            if (result && result.message === 'Scan already running') {
+                // Another scan is running — poll for progress
+                if (result.progress) _showScanProgress(result.progress);
+                _startScanPolling();
+                return;
+            }
+            _resetScanUI();
+            if (result) { loadPosts(); loadStatus(); loadAccounts(); }
+        }
+
+        async function doRefresh() {
+            var btn = document.getElementById('refreshBtn');
+            btn.disabled = true; btn.textContent = 'Cargando...';
+            await Promise.all([loadAccounts(), loadPosts(), loadStatus()]);
+            btn.disabled = false; btn.textContent = '\u21BB Refrescar';
+        }
+
+        async function toggleAuto() {
+            var pill = document.getElementById('autoPill');
+            var isOn = pill.classList.contains('on');
+            await api('/api/autoscan', { method: 'POST', body: JSON.stringify({ enabled: !isOn }) });
+            loadStatus();
+        }
+
+        // ══════════════════════════════════════════════════
+        // INSTAGRAM
+        // ══════════════════════════════════════════════════
+        var igCurrentFilter = '';
+        var igCurrentOffset = 0;
+        var igIsScanning = false;
+        var igAccountPostCounts = {};
+        var igAccountAvatars = {};
+        var igTotalPostsInDB = 0;
+        var igPostsShown = 0;
+        var _igAccountUsernames = [];
+
+        function igAvatarHtml(username, cls) { return makeAvatarHtml(username, cls, igAccountAvatars); }
+
+        async function igLoadStatus() {
+            var data = await api('/api/ig/status');
+            if (!data) return;
+            var lastEl = document.getElementById('igStatusLastScan');
+            var dotEl = document.getElementById('igStatusDot');
+            if (data.last_scan) {
+                lastEl.textContent = timeAgo(data.last_scan.finished_at) + ' (' + data.last_scan.new_posts + ' nuevos)';
+                if (!igIsScanning) dotEl.className = 'status-dot status-dot--ok';
+            } else {
+                lastEl.textContent = 'nunca';
+                if (!igIsScanning) dotEl.className = 'status-dot';
+            }
+            document.getElementById('igIntervalInput').value = data.interval_minutes;
+            var pill = document.getElementById('igAutoPill');
+            var label = document.getElementById('igAutoLabel');
+            if (data.auto_scan) {
+                pill.className = 'auto-pill on';
+                label.textContent = 'Auto ON';
+            } else {
+                pill.className = 'auto-pill off';
+                label.textContent = 'Auto OFF';
+            }
+        }
+
+        async function igSetInterval() {
+            var mins = parseInt(document.getElementById('igIntervalInput').value, 10);
+            if (!mins || mins < 1 || mins > 1440) return;
+            await api('/api/ig/interval', { method: 'POST', body: JSON.stringify({ minutes: mins }) });
+            igLoadStatus();
+        }
+
+        async function igLoadAccounts() {
+            var accounts = await api('/api/ig/accounts');
+            if (!accounts) return;
+            igAccountAvatars = {};
+            _igAccountUsernames = [];
+            accounts.forEach(function(a) {
+                _igAccountUsernames.push(a.username);
+                if (a.avatar_url) igAccountAvatars[a.username] = a.avatar_url;
+            });
+            document.getElementById('igStatusAccounts').textContent = _igAccountUsernames.length;
+            document.getElementById('igAccountCountBadge').textContent = _igAccountUsernames.length;
+            igRenderChips();
+            igUpdateFilterBar(_igAccountUsernames);
+            igFetchPostCounts(_igAccountUsernames);
+        }
+
+        function igRenderChips() {
+            var list = document.getElementById('igAccountList');
+            if (_igAccountUsernames.length === 0) {
+                list.innerHTML = '<div class="empty-msg">Sin cuentas IG. Agrega una para empezar.</div>';
+                return;
+            }
+            list.innerHTML = _igAccountUsernames.map(function(u) {
+                var c = igAccountPostCounts[u] !== undefined ? igAccountPostCounts[u] : '-';
+                return '<span class="chip">' + igAvatarHtml(u, 'chip') +
+                    '<span class="chip-user">@' + u + '</span>' +
+                    '<span class="chip-n">' + c + '</span>' +
+                    '<span class="chip-x" onclick="igRemoveAccount(\'' + u + '\')">&times;</span></span>';
+            }).join('');
+        }
+
+        async function igFetchPostCounts(accounts) {
+            var all = await api('/api/ig/posts?limit=9999&offset=0');
+            if (!all) return;
+            igAccountPostCounts = {};
+            igTotalPostsInDB = all.length;
+            accounts.forEach(function(u) { igAccountPostCounts[u] = 0; });
+            all.forEach(function(p) {
+                igAccountPostCounts[p.username] = (igAccountPostCounts[p.username] || 0) + 1;
+            });
+            document.getElementById('igStatusPosts').textContent = igTotalPostsInDB;
+            igRenderChips();
+            igUpdateFilterBadges();
+        }
+
+        function igUpdateFilterBadges() {
+            document.querySelectorAll('#igFilterBar .ftag').forEach(function(t) {
+                var u = t.getAttribute('data-user');
+                var b = t.querySelector('.ftag-n');
+                if (!b) return;
+                b.textContent = u === '' ? igTotalPostsInDB : (igAccountPostCounts[u] || 0);
+            });
+        }
+
+        async function igAddAccount() {
+            var input = document.getElementById('igUsernameInput');
+            var u = input.value.trim();
+            if (!u) return;
+            await api('/api/ig/accounts', { method: 'POST', body: JSON.stringify({ username: u }) });
+            input.value = '';
+            igLoadAccounts();
+        }
+
+        async function igRemoveAccount(u) {
+            if (!confirm('Eliminar IG @' + u + ' y todos sus reels?')) return;
+            await api('/api/ig/accounts/' + u, { method: 'DELETE' });
+            igLoadAccounts();
+            igLoadPosts();
+        }
+
+        function igUpdateFilterBar(accounts) {
+            var bar = document.getElementById('igFilterBar');
+            var tb = igTotalPostsInDB || '-';
+            bar.innerHTML = '<span class="ftag ' + (igCurrentFilter === '' ? 'on' : '') +
+                '" data-user="" onclick="igFilterPosts(this,\'\')">Todos <span class="ftag-n">' + tb + '</span></span>';
+            accounts.forEach(function(u) {
+                var c = igAccountPostCounts[u] !== undefined ? igAccountPostCounts[u] : '-';
+                bar.innerHTML += '<span class="ftag ' + (igCurrentFilter === u ? 'on' : '') +
+                    '" data-user="' + u + '" onclick="igFilterPosts(this,\'' + u + '\')">' +
+                    igAvatarHtml(u, 'ftag') + ' @' + u +
+                    ' <span class="ftag-n">' + c + '</span></span>';
+            });
+        }
+
+        function igFilterPosts(el, u) {
+            igCurrentFilter = u;
+            igCurrentOffset = 0;
+            document.querySelectorAll('#igFilterBar .ftag').forEach(function(t) { t.classList.remove('on'); });
+            el.classList.add('on');
+            igLoadPosts();
+        }
+
+        function igStatsHtml(p) {
+            if (p.view_count == null && p.like_count == null && p.comment_count == null) return '';
+            return '<div class="t-stats">' +
+                '<span class="t-stat"><span class="t-stat-icon">&#128065;</span> ' + fmtCompact(p.view_count) + '</span>' +
+                '<span class="t-stat"><span class="t-stat-icon">&#10084;</span> ' + fmtCompact(p.like_count) + '</span>' +
+                '<span class="t-stat"><span class="t-stat-icon">&#128172;</span> ' + fmtCompact(p.comment_count) + '</span>' +
+            '</div>';
+        }
+
+        async function igLoadPosts(append) {
+            var params = new URLSearchParams({ limit: PAGE_SIZE, offset: igCurrentOffset });
+            if (igCurrentFilter) params.set('username', igCurrentFilter);
+            var posts = await api('/api/ig/posts?' + params);
+            if (!posts) return;
+            var feed = document.getElementById('igPostsFeed');
+            var html = posts.map(function(p) {
+                var tz = formatMultiTZ(p.post_date || p.discovered_at);
+                var desc = p.caption ? '<div class="t-desc">' + escapeHtml(p.caption) + '</div>' : '';
+                var thumb = p.thumbnail_url ? '<img class="t-thumb" src="' + escapeHtml(p.thumbnail_url) + '" alt="" loading="lazy">' : '';
+                return '<div class="t-card">' +
+                    '<div class="t-card-body">' +
+                        '<div class="t-row1">' +
+                            '<span class="t-user">' + igAvatarHtml(p.username, 'card') + ' @' + escapeHtml(p.username) + '</span>' +
+                            '<div class="t-tz">' + tz + '</div>' +
+                        '</div>' + desc + igStatsHtml(p) +
+                        '<div class="t-foot">' +
+                            '<a class="t-link" href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">Abrir en Instagram &#8599;</a>' +
+                        '</div>' +
+                    '</div>' + thumb +
+                '</div>';
+            }).join('');
+            if (append) { feed.innerHTML += html; igPostsShown += posts.length; }
+            else if (html) { feed.innerHTML = html; igPostsShown = posts.length; }
+            else { feed.innerHTML = '<div class="empty-feed"><strong>Sin reels todavia</strong><span>Agrega cuentas IG y ejecuta un scan.</span></div>'; igPostsShown = 0; }
+            document.getElementById('igPostsShownBadge').textContent = igPostsShown;
+            document.getElementById('igLoadMoreBtn').style.display = posts.length >= PAGE_SIZE ? '' : 'none';
+        }
+
+        function igLoadMore() { igCurrentOffset += PAGE_SIZE; igLoadPosts(true); }
+
+        async function igDoScan() {
+            var btn = document.getElementById('igScanBtn');
+            var ind = document.getElementById('igScanIndicator');
+            var dot = document.getElementById('igStatusDot');
+            btn.disabled = true; btn.textContent = 'Escaneando...';
+            ind.classList.add('active'); dot.className = 'status-dot status-dot--scanning';
+            igIsScanning = true;
+            var result = await api('/api/ig/scan', { method: 'POST' });
+            btn.disabled = false; btn.textContent = 'Escanear ahora';
+            ind.classList.remove('active'); igIsScanning = false;
+            if (result) { igLoadPosts(); igLoadStatus(); igLoadAccounts(); }
+        }
+
+        async function igDoRefresh() {
+            var btn = document.getElementById('igRefreshBtn');
+            btn.disabled = true; btn.textContent = 'Cargando...';
+            await Promise.all([igLoadAccounts(), igLoadPosts(), igLoadStatus()]);
+            btn.disabled = false; btn.textContent = '\u21BB Refrescar';
+        }
+
+        async function igToggleAuto() {
+            var pill = document.getElementById('igAutoPill');
+            var isOn = pill.classList.contains('on');
+            await api('/api/ig/autoscan', { method: 'POST', body: JSON.stringify({ enabled: !isOn }) });
+            igLoadStatus();
+        }
+
+        // ══════════════════════════════════════════════════
+        // INIT
+        // ══════════════════════════════════════════════════
+        loadStatus(); loadAccounts(); loadPosts();
+        // IG disabled — uncomment to re-enable
+        // igLoadStatus(); igLoadAccounts(); igLoadPosts();
+        setInterval(function() { loadStatus(); }, 60000);
+    </script>
+</body>
+</html>
