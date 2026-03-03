@@ -18,6 +18,11 @@ def get_recent_posts(username, max_posts=30):
         "extract_flat": True,
         "playlist_items": f"1-{max_posts}",
         "skip_download": True,
+        "cachedir": False,
+        "http_headers": {
+            "Cache-Control": "no-cache, no-store",
+            "Pragma": "no-cache",
+        },
     }
 
     posts = []
