@@ -1,9 +1,11 @@
 import os
+import hashlib
 import logging
 import threading
 from datetime import datetime
 from functools import wraps
 
+import requests as http_requests
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, render_template, redirect, url_for, make_response
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -22,7 +24,11 @@ app.secret_key = os.urandom(32)
 MONITOR_PASSWORD = os.getenv("MONITOR_PASSWORD", "")
 SCAN_INTERVAL = int(os.getenv("SCAN_INTERVAL_MINUTES", "30"))
 IG_SCAN_INTERVAL = int(os.getenv("IG_SCAN_INTERVAL_MINUTES", "30"))
+SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 AUTH_COOKIE = "tiktok_auth"
+
+# Auth token: deterministic hash so it survives restarts
+_AUTH_TOKEN = hashlib.sha256(MONITOR_PASSWORD.encode()).hexdigest() if MONITOR_PASSWORD else ""
 
 # --- Auth ---
 
@@ -30,7 +36,7 @@ def _check_auth():
     if not MONITOR_PASSWORD:
         return True
     token = request.cookies.get(AUTH_COOKIE, "")
-    return token == MONITOR_PASSWORD
+    return token == _AUTH_TOKEN
 
 
 def require_auth(f):
@@ -56,7 +62,7 @@ def login_submit():
     password = request.form.get("password", "")
     if password == MONITOR_PASSWORD:
         resp = make_response(redirect(url_for("dashboard")))
-        resp.set_cookie(AUTH_COOKIE, password, httponly=True, samesite="Lax", max_age=86400 * 30)
+        resp.set_cookie(AUTH_COOKIE, _AUTH_TOKEN, httponly=True, samesite="Lax", max_age=86400 * 30)
         return resp
     return render_template("login.html", error="Password incorrecto"), 401
 
@@ -115,10 +121,10 @@ def api_remove_account(username):
 @app.route("/api/posts", methods=["GET"])
 @require_auth
 def api_posts():
-    username = request.args.get("username")
+    usernames = request.args.getlist("username")
     limit = int(request.args.get("limit", "50"))
     offset = int(request.args.get("offset", "0"))
-    posts = db.get_posts(username=username, limit=limit, offset=offset)
+    posts = db.get_posts(usernames=usernames or None, limit=limit, offset=offset)
     return jsonify(posts)
 
 
@@ -280,6 +286,37 @@ def api_ig_set_interval():
     return jsonify({"interval_minutes": minutes})
 
 
+# --- Slack Notifications ---
+
+def notify_slack(new_posts):
+    """Send a Slack message via webhook when new TikTok posts are found."""
+    if not SLACK_WEBHOOK_URL or not new_posts:
+        return
+    # Group by username
+    by_user = {}
+    for p in new_posts:
+        by_user.setdefault(p["username"], []).append(p)
+
+    lines = [f"*🔔 {len(new_posts)} nuevo{'s' if len(new_posts) != 1 else ''} post{'s' if len(new_posts) != 1 else ''} en TikTok*\n"]
+    for username, posts in by_user.items():
+        lines.append(f"*@{username}* — {len(posts)} post{'s' if len(posts) != 1 else ''}:")
+        for p in posts[:5]:  # max 5 per user to avoid huge messages
+            desc = (p.get("description") or "Sin descripción")[:80]
+            lines.append(f"  • <{p['url']}|{desc}>")
+        if len(posts) > 5:
+            lines.append(f"  _...y {len(posts) - 5} más_")
+
+    payload = {"text": "\n".join(lines)}
+    try:
+        resp = http_requests.post(SLACK_WEBHOOK_URL, json=payload, timeout=10)
+        if resp.status_code != 200:
+            logger.warning(f"Slack webhook returned {resp.status_code}: {resp.text[:100]}")
+        else:
+            logger.info(f"Slack notification sent ({len(new_posts)} posts)")
+    except Exception as e:
+        logger.warning(f"Slack notification failed: {e}")
+
+
 # --- Scan Logic ---
 
 _scan_lock = threading.Lock()
@@ -322,12 +359,15 @@ def _run_scan_inner():
     for username, avatar_url in avatars.items():
         db.update_avatar(username, avatar_url)
 
-    new_count = db.insert_posts(all_posts)
+    new_count, new_posts = db.insert_posts(all_posts)
     purged = db.purge_old_posts(hours=24)
     finished_at = datetime.utcnow().isoformat()
 
     db.add_scan_log(started_at, finished_at, new_count, "; ".join(errors) if errors else None)
     logger.info(f"Scan finished: {new_count} new, {purged} purged, {len(errors)} errors")
+
+    # Notify Slack about new posts
+    notify_slack(new_posts)
 
     return {
         "new_posts": new_count,
@@ -379,10 +419,11 @@ scheduler.add_job(run_scan, "interval", minutes=SCAN_INTERVAL, id="tiktok_scan",
 
 
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 3457))
     db.init_db()
     scheduler.start()
-    logger.info(f"TikTok Monitor starting on :3457 (scan every {SCAN_INTERVAL}min)")
+    logger.info(f"TikTok Monitor starting on :{port} (scan every {SCAN_INTERVAL}min)")
     try:
-        app.run(host="0.0.0.0", port=3457, debug=False)
+        app.run(host="0.0.0.0", port=port, debug=False)
     finally:
         scheduler.shutdown()

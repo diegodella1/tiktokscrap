@@ -135,9 +135,9 @@ def get_known_video_ids(username):
 
 
 def insert_posts(posts):
-    """Upsert posts (insert new, update stats on existing). Returns count of newly inserted."""
+    """Upsert posts (insert new, update stats on existing). Returns (count, list) of newly inserted."""
     if not posts:
-        return 0
+        return 0, []
     conn = _connect()
     cursor = conn.cursor()
     # Get existing IDs to distinguish new vs updated
@@ -145,6 +145,7 @@ def insert_posts(posts):
     placeholders = ",".join("?" * len(ids))
     existing = {r[0] for r in cursor.execute(f"SELECT video_id FROM posts WHERE video_id IN ({placeholders})", ids).fetchall()}
     new_count = 0
+    new_posts = []
     for p in posts:
         cursor.execute(
             """INSERT INTO posts (video_id, username, description, url, post_date, view_count, like_count, comment_count, repost_count, thumbnail_url)
@@ -162,9 +163,10 @@ def insert_posts(posts):
         )
         if p["video_id"] not in existing:
             new_count += 1
+            new_posts.append(p)
     conn.commit()
     conn.close()
-    return new_count
+    return new_count, new_posts
 
 
 def update_avatar(username, avatar_url):
@@ -174,13 +176,14 @@ def update_avatar(username, avatar_url):
     conn.close()
 
 
-def get_posts(username=None, limit=50, offset=0):
+def get_posts(usernames=None, limit=50, offset=0):
     conn = _connect()
     order = "ORDER BY COALESCE(post_date, discovered_at) DESC"
-    if username:
+    if usernames:
+        placeholders = ",".join("?" * len(usernames))
         rows = conn.execute(
-            f"SELECT * FROM posts WHERE username = ? {order} LIMIT ? OFFSET ?",
-            (username, limit, offset),
+            f"SELECT * FROM posts WHERE username IN ({placeholders}) {order} LIMIT ? OFFSET ?",
+            (*usernames, limit, offset),
         ).fetchall()
     else:
         rows = conn.execute(
