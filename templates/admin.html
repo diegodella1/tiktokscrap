@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Monitor Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #08090d;
+            --card: #10121a;
+            --surface: #161824;
+            --border: #1c1f2e;
+            --border-hover: #2a2d40;
+            --text: #e0e4ec;
+            --muted: #8f94a8;
+            --faint: #5f6476;
+            --accent: #ff3b5c;
+            --accent-hover: #e63350;
+            --green: #22c55e;
+            --yellow: #fbbf24;
+            --red: #f87171;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+        body {
+            background: radial-gradient(circle at top right, rgba(255,59,92,0.08), transparent 32%), var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+        }
+        a { color: inherit; text-decoration: none; }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            background: rgba(8,9,13,0.88);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
+        .brand-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+        .topbar-right {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .btn, button {
+            font: inherit;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            min-height: 36px;
+            padding: 0.45rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn:hover { color: var(--text); border-color: var(--border-hover); }
+        .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            font-weight: 600;
+        }
+        .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        .btn-danger {
+            color: var(--red);
+            border-color: rgba(248,113,113,0.25);
+            background: rgba(248,113,113,0.06);
+        }
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem 3rem;
+        }
+        .hero {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .hero-card, .card {
+            background: rgba(16,18,26,0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+        .hero-card {
+            padding: 1.35rem 1.4rem;
+        }
+        .hero-card h1 {
+            font-size: 1.35rem;
+            margin-bottom: 0.5rem;
+        }
+        .hero-card p {
+            color: var(--muted);
+            max-width: 68ch;
+        }
+        .stats {
+            display: grid;
+            gap: 0.8rem;
+        }
+        .stat {
+            padding: 1rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .stat:last-child { border-bottom: 0; }
+        .stat-label {
+            color: var(--faint);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 0.2rem;
+        }
+        .stat-value {
+            font-family: var(--mono);
+            font-size: 0.88rem;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 1rem;
+        }
+        .card {
+            padding: 1.1rem;
+        }
+        .card h2 {
+            font-size: 0.88rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--muted);
+            margin-bottom: 0.9rem;
+        }
+        .field {
+            margin-bottom: 0.9rem;
+        }
+        .field label {
+            display: block;
+            color: var(--muted);
+            font-size: 0.75rem;
+            margin-bottom: 0.35rem;
+        }
+        .field input, .field textarea {
+            width: 100%;
+            padding: 0.7rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            color: var(--text);
+            font-family: var(--font);
+        }
+        .field input:focus, .field textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .field small {
+            display: block;
+            color: var(--faint);
+            font-size: 0.72rem;
+            margin-top: 0.35rem;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        .checks {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.4rem 0 1rem;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+        .checks input { accent-color: var(--accent); }
+        .row-actions {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .stack {
+            display: grid;
+            gap: 0.8rem;
+        }
+        .rule {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: rgba(22,24,36,0.72);
+            padding: 0.95rem;
+        }
+        .rule-top {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            gap: 0.8rem;
+            margin-bottom: 0.6rem;
+        }
+        .rule-name {
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+        .rule-meta {
+            color: var(--muted);
+            font-size: 0.78rem;
+            line-height: 1.6;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.18rem 0.45rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+        }
+        .badge-on {
+            color: var(--green);
+            background: rgba(34,197,94,0.08);
+            border-color: rgba(34,197,94,0.25);
+        }
+        .badge-off {
+            color: var(--red);
+            background: rgba(248,113,113,0.08);
+            border-color: rgba(248,113,113,0.25);
+        }
+        .rule-actions {
+            display: flex;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+            margin-top: 0.7rem;
+        }
+        .mono { font-family: var(--mono); }
+        .empty {
+            padding: 1rem;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            color: var(--faint);
+            text-align: center;
+        }
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 1.2rem;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 1px solid rgba(34,197,94,0.28);
+            color: var(--green);
+            padding: 0.55rem 0.9rem;
+            border-radius: 999px;
+            opacity: 0;
+            transition: opacity 0.15s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+        @media (max-width: 920px) {
+            .hero, .layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="brand"><span class="brand-dot"></span> Admin</div>
+        <div class="topbar-right">
+            <a href="/" class="btn">Dashboard</a>
+            <a href="/docs" class="btn">Docs</a>
+            <a href="/logout" class="btn">Salir</a>
+        </div>
+    </div>
+
+    <div class="page">
+        <section class="hero">
+            <div class="hero-card">
+                <h1>Configuración y reglas de alertas</h1>
+                <p>Acá configurás Slack y definís reglas del tipo "si un post llega a X views dentro de X minutos, avisar". El evaluador corre cada minuto y sólo procesa las reglas cuyo intervalo ya venció.</p>
+            </div>
+            <div class="hero-card stats">
+                <div class="stat">
+                    <div class="stat-label">Última corrida</div>
+                    <div class="stat-value" id="statLastRun">nunca</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Reglas evaluadas</div>
+                    <div class="stat-value" id="statChecked">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Notificaciones enviadas</div>
+                    <div class="stat-value" id="statSent">0</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="layout">
+            <div class="stack">
+                <div class="card">
+                    <h2>Slack</h2>
+                    <div class="field">
+                        <label for="webhookInput">Webhook URL</label>
+                        <input id="webhookInput" type="text" placeholder="https://hooks.slack.com/services/...">
+                        <small>Si lo dejás vacío, no se van a poder enviar alertas.</small>
+                    </div>
+                    <div class="field">
+                        <label for="channelInput">Canal por defecto</label>
+                        <input id="channelInput" type="text" placeholder="#alerts">
+                        <small>Opcional. Cada regla puede sobreescribirlo.</small>
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn btn-primary" onclick="saveSettings()">Guardar settings</button>
+                        <button class="btn" onclick="runAlerts()">Correr evaluación ahora</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 id="ruleFormTitle">Nueva regla</h2>
+                    <div class="field">
+                        <label for="nameInput">Nombre</label>
+                        <input id="nameInput" type="text" placeholder="Viral rápido">
+                    </div>
+                    <div class="field">
+                        <label for="usernameInput">Cuenta TikTok</label>
+                        <input id="usernameInput" type="text" placeholder="@usuario o vacío para todas">
+                    </div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label for="minViewsInput">Views mínimas</label>
+                            <input id="minViewsInput" type="number" min="1" value="10000">
+                        </div>
+                        <div class="field">
+                            <label for="maxAgeInput">Ventana del post (min)</label>
+                            <input id="maxAgeInput" type="number" min="1" value="60">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label for="checkEveryInput">Revisar cada (min)</label>
+                            <input id="checkEveryInput" type="number" min="1" value="5">
+                        </div>
+                        <div class="field">
+                            <label for="ruleChannelInput">Canal Slack</label>
+                            <input id="ruleChannelInput" type="text" placeholder="#growth-alerts">
+                        </div>
+                    </div>
+                    <label class="checks">
+                        <input id="enabledInput" type="checkbox" checked>
+                        <span>Regla habilitada</span>
+                    </label>
+                    <div class="row-actions">
+                        <button class="btn btn-primary" onclick="saveRule()">Guardar regla</button>
+                        <button class="btn" onclick="resetForm()">Limpiar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Reglas configuradas</h2>
+                <div id="rulesList" class="stack">
+                    <div class="empty">Cargando reglas...</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        var editingRuleId = null;
+
+        async function api(path, opts) {
+            opts = opts || {};
+            var res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+            if (res.status === 401) { window.location = '/login'; return null; }
+            return res.json();
+        }
+
+        function esc(v) {
+            var d = document.createElement('div');
+            d.textContent = v == null ? '' : String(v);
+            return d.innerHTML;
+        }
+
+        function fmtDate(s) {
+            if (!s) return 'nunca';
+            var d = new Date(s);
+            if (isNaN(d.getTime())) return s;
+            return d.toLocaleString('es-AR', {
+                timeZone: 'America/Argentina/Buenos_Aires',
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', hour12: false
+            });
+        }
+
+        function toast(msg) {
+            var el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(function() { el.classList.remove('show'); }, 2200);
+        }
+
+        function setAlertStats(data) {
+            document.getElementById('statLastRun').textContent = data.last_run_at ? fmtDate(data.last_run_at) : 'nunca';
+            document.getElementById('statChecked').textContent = data.checked_rules || 0;
+            document.getElementById('statSent').textContent = data.notifications_sent || 0;
+        }
+
+        async function loadSettings() {
+            var data = await api('/api/admin/settings');
+            if (!data) return;
+            document.getElementById('webhookInput').value = data.slack_webhook_url || '';
+            document.getElementById('channelInput').value = data.slack_default_channel || '';
+            setAlertStats(data.last_alert_run || {});
+        }
+
+        async function saveSettings() {
+            var payload = {
+                slack_webhook_url: document.getElementById('webhookInput').value.trim(),
+                slack_default_channel: document.getElementById('channelInput').value.trim()
+            };
+            var res = await api('/api/admin/settings', { method: 'POST', body: JSON.stringify(payload) });
+            if (res && !res.error) toast('Settings guardados');
+        }
+
+        function resetForm() {
+            editingRuleId = null;
+            document.getElementById('ruleFormTitle').textContent = 'Nueva regla';
+            document.getElementById('nameInput').value = '';
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('minViewsInput').value = 10000;
+            document.getElementById('maxAgeInput').value = 60;
+            document.getElementById('checkEveryInput').value = 5;
+            document.getElementById('ruleChannelInput').value = '';
+            document.getElementById('enabledInput').checked = true;
+        }
+
+        function fillForm(rule) {
+            editingRuleId = rule.id;
+            document.getElementById('ruleFormTitle').textContent = 'Editar regla #' + rule.id;
+            document.getElementById('nameInput').value = rule.name || '';
+            document.getElementById('usernameInput').value = rule.username ? '@' + rule.username : '';
+            document.getElementById('minViewsInput').value = rule.min_views;
+            document.getElementById('maxAgeInput').value = rule.max_post_age_minutes;
+            document.getElementById('checkEveryInput').value = rule.check_every_minutes;
+            document.getElementById('ruleChannelInput').value = rule.slack_channel || '';
+            document.getElementById('enabledInput').checked = !!rule.enabled;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function saveRule() {
+            var payload = {
+                name: document.getElementById('nameInput').value.trim(),
+                username: document.getElementById('usernameInput').value.trim(),
+                min_views: parseInt(document.getElementById('minViewsInput').value, 10),
+                max_post_age_minutes: parseInt(document.getElementById('maxAgeInput').value, 10),
+                check_every_minutes: parseInt(document.getElementById('checkEveryInput').value, 10),
+                slack_channel: document.getElementById('ruleChannelInput').value.trim(),
+                enabled: document.getElementById('enabledInput').checked
+            };
+            var path = editingRuleId ? '/api/admin/rules/' + editingRuleId : '/api/admin/rules';
+            var method = editingRuleId ? 'PUT' : 'POST';
+            var res = await api(path, { method: method, body: JSON.stringify(payload) });
+            if (!res) return;
+            if (res.error) { toast(res.error); return; }
+            resetForm();
+            toast(editingRuleId ? 'Regla actualizada' : 'Regla creada');
+            loadRules();
+        }
+
+        async function deleteRule(id) {
+            if (!confirm('Eliminar la regla #' + id + '?')) return;
+            await api('/api/admin/rules/' + id, { method: 'DELETE' });
+            toast('Regla eliminada');
+            loadRules();
+            if (editingRuleId === id) resetForm();
+        }
+
+        async function loadRules() {
+            var rules = await api('/api/admin/rules');
+            if (!rules) return;
+            var root = document.getElementById('rulesList');
+            if (!rules.length) {
+                root.innerHTML = '<div class="empty">No hay reglas todavía.</div>';
+                return;
+            }
+            root.innerHTML = rules.map(function(rule) {
+                var badge = rule.enabled ? '<span class="badge badge-on">Activa</span>' : '<span class="badge badge-off">Pausada</span>';
+                var scope = rule.username ? '@' + esc(rule.username) : 'todas las cuentas';
+                var channel = rule.slack_channel ? esc(rule.slack_channel) : 'canal por defecto';
+                return '<div class="rule">' +
+                    '<div class="rule-top">' +
+                        '<div>' +
+                            '<div class="rule-name">' + esc(rule.name) + '</div>' +
+                            '<div class="rule-meta">Scope: <span class="mono">' + scope + '</span><br>' +
+                            'Condición: <span class="mono">>=' + rule.min_views + ' views</span> en <span class="mono"><= ' + rule.max_post_age_minutes + ' min</span><br>' +
+                            'Chequeo: cada <span class="mono">' + rule.check_every_minutes + ' min</span> · Slack: <span class="mono">' + channel + '</span><br>' +
+                            'Último chequeo: <span class="mono">' + esc(fmtDate(rule.last_checked_at)) + '</span></div>' +
+                        '</div>' + badge +
+                    '</div>' +
+                    '<div class="rule-actions">' +
+                        '<button class="btn js-edit-rule" data-rule-id="' + rule.id + '">Editar</button>' +
+                        '<button class="btn btn-danger js-delete-rule" data-rule-id="' + rule.id + '">Eliminar</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+            root.querySelectorAll('.js-edit-rule').forEach(function(btn) {
+                btn.onclick = function() {
+                    var id = parseInt(btn.getAttribute('data-rule-id'), 10);
+                    var rule = rules.find(function(item) { return item.id === id; });
+                    if (rule) fillForm(rule);
+                };
+            });
+            root.querySelectorAll('.js-delete-rule').forEach(function(btn) {
+                btn.onclick = function() {
+                    var id = parseInt(btn.getAttribute('data-rule-id'), 10);
+                    deleteRule(id);
+                };
+            });
+        }
+
+        async function runAlerts() {
+            var res = await api('/api/admin/alerts/run', { method: 'POST' });
+            if (!res) return;
+            setAlertStats(res);
+            if (res.errors && res.errors.length) toast('Evaluación corrida con errores');
+            else toast('Evaluación ejecutada');
+            loadRules();
+        }
+
+        async function pollAlertStatus() {
+            var res = await api('/api/admin/alerts/status');
+            if (res) setAlertStats(res);
+        }
+
+        loadSettings();
+        loadRules();
+        pollAlertStatus();
+        setInterval(pollAlertStatus, 30000);
+    </script>
+</body>
+</html>

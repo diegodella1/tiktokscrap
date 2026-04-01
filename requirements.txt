@@ -10,4 +10,3 @@ requests>=2.28
 tzlocal==5.3.1
 Werkzeug==3.1.6
 yt-dlp==2026.2.21
-instaloader>=4.10

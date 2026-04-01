@@ -3,1109 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Monitor - Docs</title>
+    <title>TikTok Monitor - Docs</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* ── Reset & Base ───────────────────────────────────── */
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background: #08090d;
             color: #c4c9d4;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 14px;
-            line-height: 1.8;
+            line-height: 1.7;
         }
-        a { color: #ff3b5c; text-decoration: none; transition: color 0.15s; }
-        a:hover { color: #ff6b82; text-decoration: underline; }
-        ::selection { background: rgba(255,59,92,0.2); color: #fff; }
-
-        /* ── Layout ─────────────────────────────────────────── */
-        .layout {
-            display: grid;
-            grid-template-columns: 220px 1fr;
-            grid-template-rows: auto 1fr;
-            min-height: 100vh;
+        a { color: #ff3b5c; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: #161824;
+            border: 1px solid #1c1f2e;
+            border-radius: 4px;
+            padding: 0.1rem 0.4rem;
+            color: #d8dce6;
         }
-
-        /* ── Header ─────────────────────────────────────────── */
-        .top-header {
-            grid-column: 1 / -1;
+        pre {
+            background: #0c0d14;
+            border: 1px solid #1c1f2e;
+            border-radius: 10px;
+            padding: 1rem 1.1rem;
+            overflow-x: auto;
+            margin-top: 0.8rem;
+        }
+        pre code {
+            background: transparent;
+            border: 0;
+            padding: 0;
+        }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 2rem;
+            padding: 0 1.5rem;
             height: 44px;
             border-bottom: 1px solid #1c1f2e;
-            background: rgba(8,9,13,0.85);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            background: rgba(8, 9, 13, 0.88);
+            backdrop-filter: blur(12px);
         }
-        .top-header h1 {
+        .brand {
             font-size: 0.78rem;
             font-weight: 700;
             letter-spacing: 1.5px;
-            color: #e0e4ec;
             text-transform: uppercase;
+            color: #e0e4ec;
         }
-        .top-header h1 span { color: #555868; }
-        .btn-dash {
+        .btn {
+            display: inline-flex;
+            align-items: center;
             padding: 0.35rem 0.75rem;
             border: 1px solid #1c1f2e;
             border-radius: 6px;
             background: #10121a;
             color: #8b90a0;
-            font-family: inherit;
             font-size: 0.75rem;
             font-weight: 500;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.15s;
-            white-space: nowrap;
         }
-        .btn-dash:hover { border-color: #2a2d40; color: #e0e4ec; text-decoration: none; }
-
-        /* ── Sidebar ────────────────────────────────────────── */
-        .sidebar {
-            position: sticky;
-            top: 44px;
-            height: calc(100vh - 44px);
-            overflow-y: auto;
-            padding: 1.5rem 1.2rem;
-            border-right: 1px solid #1c1f2e;
-            background: #0a0b10;
-        }
-        .sidebar-label {
-            font-size: 0.62rem;
-            font-weight: 600;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: #555868;
-            margin-bottom: 0.8rem;
-        }
-        .sidebar nav ul {
-            list-style: none;
-        }
-        .sidebar nav li {
-            margin-bottom: 0.15rem;
-        }
-        .sidebar nav a {
-            display: block;
-            padding: 0.35rem 0.6rem;
-            border-radius: 4px;
-            color: #6b7080;
-            font-size: 0.75rem;
-            font-weight: 500;
-            line-height: 1.5;
-            transition: background 0.15s, color 0.15s;
-        }
-        .sidebar nav a:hover {
-            background: #161824;
+        .btn:hover {
             color: #e0e4ec;
+            border-color: #2a2d40;
             text-decoration: none;
         }
-        .sidebar nav a.active {
-            background: rgba(255,59,92,0.1);
-            color: #ff3b5c;
+        .page {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2rem 1.25rem 3rem;
         }
-        .sidebar nav a::before {
-            content: "# ";
-            color: #3a3d4c;
-        }
-
-        /* ── Main Content ───────────────────────────────────── */
-        .main {
-            padding: 2rem 2.5rem 4rem;
-            max-width: 780px;
-        }
-
-        /* ── Section Cards ──────────────────────────────────── */
-        .card {
+        .hero, .card {
             background: #10121a;
             border: 1px solid #1c1f2e;
-            border-radius: 10px;
-            padding: 1.8rem 2rem;
-            margin-bottom: 1.5rem;
+            border-radius: 12px;
         }
-
-        /* ── Typography ─────────────────────────────────────── */
-        .card > h2 {
-            font-size: 1rem;
-            font-weight: 700;
+        .hero {
+            padding: 1.6rem 1.8rem;
+            margin-bottom: 1.25rem;
+        }
+        .hero h1 {
+            font-size: 1.25rem;
             color: #e0e4ec;
-            letter-spacing: 0.3px;
-            margin-bottom: 1.2rem;
-            padding-bottom: 0.6rem;
-            border-bottom: 1px solid #1c1f2e;
+            margin-bottom: 0.45rem;
         }
-        .card > h3,
-        .card > div > h3 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #c4c9d4;
-            margin-top: 1.6rem;
-            margin-bottom: 0.5rem;
+        .hero p { color: #8b90a0; max-width: 64ch; }
+        .grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            margin-top: 1rem;
         }
-        .card > h3:first-of-type { margin-top: 0.4rem; }
-        p { margin-bottom: 0.8rem; color: #8b90a0; }
-        ul, ol { margin-left: 1.5rem; margin-bottom: 0.8rem; color: #8b90a0; }
-        li { margin-bottom: 0.35rem; }
-        li strong { color: #c4c9d4; }
-        strong { color: #c4c9d4; }
-
-        /* ── Inline Code ────────────────────────────────────── */
-        code {
-            background: #161824;
-            border: 1px solid #1c1f2e;
-            border-radius: 4px;
-            padding: 0.1rem 0.45rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            color: #c4c9d4;
-        }
-
-        /* ── Code Blocks ────────────────────────────────────── */
-        pre {
+        .stat {
             background: #0c0d14;
             border: 1px solid #1c1f2e;
-            border-radius: 8px;
-            padding: 1rem 1.2rem;
-            margin-bottom: 1rem;
-            overflow-x: auto;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            line-height: 1.7;
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
         }
-        pre code {
-            background: none;
-            border: none;
-            padding: 0;
-            color: #8b90a0;
-        }
-        /* Command highlighting: lines starting with # are comments */
-        .cmd-comment { color: #555868; }
-        .cmd-line { color: #c4c9d4; }
-        .cmd-flag { color: #fbbf24; }
-        .cmd-url { color: #60a5fa; }
-
-        /* ── API Method Badges ──────────────────────────────── */
-        .badge {
-            display: inline-block;
-            padding: 0.15rem 0.55rem;
-            border-radius: 3px;
+        .stat-label {
             font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-            min-width: 42px;
-            text-align: center;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #6b7080;
+            margin-bottom: 0.25rem;
         }
-        .badge-get { background: #0d2818; color: #4ade80; border: 1px solid #1a3a2a; }
-        .badge-post { background: #2a1f0a; color: #fbbf24; border: 1px solid #3a2a1a; }
-        .badge-delete { background: #2a0d0d; color: #f87171; border: 1px solid #3a1a1a; }
-
-        /* ── API Endpoint List ──────────────────────────────── */
-        .api-list {
-            list-style: none;
-            margin-left: 0;
+        .stat-value {
+            color: #e0e4ec;
+            font-weight: 600;
+        }
+        .card {
+            padding: 1.5rem 1.6rem;
             margin-bottom: 1rem;
+        }
+        .card h2 {
+            color: #e0e4ec;
+            font-size: 0.98rem;
+            margin-bottom: 0.8rem;
+        }
+        .card h3 {
+            color: #d8dce6;
+            font-size: 0.84rem;
+            margin-top: 1rem;
+            margin-bottom: 0.45rem;
+        }
+        .card p, .card li { color: #8b90a0; }
+        .card ul { margin-left: 1.2rem; }
+        .api-list {
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 0.8rem;
         }
         .api-item {
-            display: grid;
-            grid-template-columns: 52px 1fr;
-            gap: 0.8rem;
-            align-items: start;
-            padding: 0.7rem 0;
-            border-bottom: 1px solid #141420;
-        }
-        .api-item:last-child { border-bottom: none; }
-        .api-endpoint {
-            font-size: 0.82rem;
-        }
-        .api-endpoint code {
-            font-size: 0.8rem;
-            color: #e0e4ec;
-            background: #161824;
-        }
-        .api-desc {
-            color: #888;
-            font-size: 0.8rem;
-            margin-top: 0.15rem;
-        }
-        .api-desc code {
-            font-size: 0.76rem;
-        }
-
-        /* ── Definition Lists (Key-Value pairs) ─────────────── */
-        .def-list {
-            margin-bottom: 1rem;
-        }
-        .def-item {
-            display: grid;
-            grid-template-columns: minmax(100px, auto) 1fr;
-            gap: 0.6rem 1.2rem;
-            padding: 0.55rem 0;
-            border-bottom: 1px solid #141420;
-            font-size: 0.82rem;
-        }
-        .def-item:last-child { border-bottom: none; }
-        .def-key {
-            color: #d0d0d0;
-        }
-        .def-key code {
-            font-size: 0.8rem;
-        }
-        .def-val {
-            color: #888;
-        }
-
-        /* ── Tables (general, for timezones etc.) ───────────── */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1rem;
-            font-size: 0.82rem;
-        }
-        th, td {
-            text-align: left;
-            padding: 0.5rem 0.7rem;
-            border-bottom: 1px solid #141420;
-        }
-        th {
-            color: #666;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-        td { color: #aaa; }
-        td strong { color: #d0d0d0; }
-
-        /* ── Callout / Note ─────────────────────────────────── */
-        .note {
-            border-left: 3px solid #ff3b5c;
             background: #0c0d14;
-            padding: 0.7rem 1rem;
-            margin: 0.8rem 0;
-            border-radius: 0 6px 6px 0;
-            font-size: 0.8rem;
-            color: #8b90a0;
+            border: 1px solid #1c1f2e;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
         }
-        .note code { font-size: 0.78rem; }
-        .note-label {
-            display: block;
+        .method {
+            display: inline-block;
+            min-width: 54px;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
             font-size: 0.68rem;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: #ff3b5c;
-            margin-bottom: 0.3rem;
-            font-weight: 600;
-        }
-
-        .note-info {
-            border-left-color: #60a0dc;
-        }
-        .note-info .note-label { color: #60a0dc; }
-
-        /* ── Mobile: floating back button ───────────────────── */
-        .mobile-back {
-            display: none;
-        }
-
-        /* ── Footer ─────────────────────────────────────────── */
-        .footer-back {
+            font-weight: 700;
             text-align: center;
-            padding-top: 1.5rem;
-            margin-top: 1rem;
-            border-top: 1px solid #1e1e2e;
+            margin-right: 0.55rem;
         }
-
-        /* ── Responsive ─────────────────────────────────────── */
-        @media (max-width: 768px) {
-            .layout {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
-            }
-
-            .sidebar {
-                position: sticky;
-                top: 44px;
-                height: auto;
-                border-right: none;
-                border-bottom: 1px solid #1e1e2e;
-                padding: 0.6rem 1rem;
-                overflow-x: auto;
-                overflow-y: hidden;
-                z-index: 50;
-            }
-            .sidebar-label { display: none; }
-            .sidebar nav ul {
-                display: flex;
-                gap: 0.3rem;
-                white-space: nowrap;
-            }
-            .sidebar nav li { margin-bottom: 0; }
-            .sidebar nav a {
-                padding: 0.3rem 0.7rem;
-                font-size: 0.72rem;
-            }
-            .sidebar nav a::before { content: none; }
-
-            .main {
-                padding: 1.2rem 1rem 6rem;
-            }
-            .card {
-                padding: 1.2rem 1rem;
-            }
-
-            .top-header {
-                padding: 0.8rem 1rem;
-            }
-            .top-header .btn-dash { display: none; }
-
-            .mobile-back {
-                display: flex;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                justify-content: center;
-                padding: 0.8rem;
-                background: rgba(8,9,13,0.9);
-                border-top: 1px solid #1c1f2e;
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                z-index: 100;
-            }
-            .mobile-back .btn-dash {
-                width: 100%;
-                max-width: 320px;
-                text-align: center;
-                padding: 0.5rem 1rem;
-            }
-
-            .api-item {
-                grid-template-columns: 1fr;
-                gap: 0.3rem;
-            }
-
-            .def-item {
-                grid-template-columns: 1fr;
-                gap: 0.1rem;
-            }
+        .get { background: #0d2818; color: #4ade80; border: 1px solid #1a3a2a; }
+        .post { background: #2a1f0a; color: #fbbf24; border: 1px solid #3a2a1a; }
+        .delete { background: #2a0d0d; color: #f87171; border: 1px solid #3a1a1a; }
+        .endpoint {
+            color: #e0e4ec;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
         }
-
-        /* ── Print ──────────────────────────────────────────── */
-        @media print {
-            body {
-                background: #fff;
-                color: #111;
-                font-size: 11pt;
-            }
-            .top-header,
-            .sidebar,
-            .mobile-back,
-            .footer-back { display: none; }
-            .layout {
-                display: block;
-            }
-            .main {
-                max-width: 100%;
-                padding: 0;
-            }
-            .card {
-                background: #fff;
-                border: 1px solid #ddd;
-                break-inside: avoid;
-                page-break-inside: avoid;
-            }
-            .card > h2 { color: #c0203a; }
-            a { color: #c0203a; }
-            pre, code {
-                background: #f5f5f5;
-                border-color: #ddd;
-                color: #222;
-            }
-            pre code { color: #222; }
-            .note {
-                background: #f9f9f9;
-                border-left-color: #c0203a;
-                color: #444;
-            }
-            .badge-get { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
-            .badge-post { background: #fff8e1; color: #f57f17; border-color: #fff3c4; }
-            .badge-delete { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
-            p, li, td, .def-val, .api-desc { color: #333; }
-            th, .def-key { color: #555; }
-            td strong, li strong, strong { color: #111; }
+        .desc { margin-top: 0.45rem; }
+        @media (max-width: 640px) {
+            .topbar { padding: 0 1rem; }
+            .page { padding: 1rem 1rem 2rem; }
+            .hero, .card { padding-left: 1rem; padding-right: 1rem; }
         }
     </style>
 </head>
 <body>
+    <div class="topbar">
+        <div class="brand">TikTok Monitor Docs</div>
+        <a href="/" class="btn">Dashboard</a>
+    </div>
 
-    <div class="layout">
-        <!-- ── Header ─────────────────────────────────────── -->
-        <header class="top-header">
-            <h1>Social Monitor <span>/</span> Docs</h1>
-            <a href="/" class="btn-dash">Dashboard</a>
-        </header>
-
-        <!-- ── Sidebar ────────────────────────────────────── -->
-        <aside class="sidebar">
-            <div class="sidebar-label">Navegacion</div>
-            <nav>
-                <ul>
-                    <li><a href="#que-es">Que es</a></li>
-                    <li><a href="#como-funciona">Como funciona</a></li>
-                    <li><a href="#instagram">Instagram Reels</a></li>
-                    <li><a href="#uso">Guia de uso</a></li>
-                    <li><a href="#horarios">Zonas horarias</a></li>
-                    <li><a href="#api">API TikTok</a></li>
-                    <li><a href="#api-ig">API Instagram</a></li>
-                    <li><a href="#admin">Administracion</a></li>
-                    <li><a href="#limites">Limites</a></li>
-                    <li><a href="#troubleshooting">Troubleshooting</a></li>
-                </ul>
-            </nav>
-        </aside>
-
-        <!-- ── Main ───────────────────────────────────────── -->
-        <main class="main">
-
-            <!-- ──── Que es ───────────────────────────────── -->
-            <section class="card" id="que-es">
-                <h2>Que es Social Monitor</h2>
-                <p>
-                    Sistema de monitoreo que rastrea cuentas de <strong>TikTok</strong> e <strong>Instagram</strong>
-                    y detecta publicaciones nuevas automaticamente. Muestra la URL, descripcion, stats y thumbnail
-                    de cada video/reel en un dashboard web con tabs separados por plataforma.
-                </p>
-                <p>No descarga videos ni interactua con las plataformas. Solo lee metadata publica.</p>
-            </section>
-
-            <!-- ──── Como funciona ────────────────────────── -->
-            <section class="card" id="como-funciona">
-                <h2>Como funciona</h2>
-
-                <h3>Ciclo de escaneo TikTok</h3>
-                <ol>
-                    <li>Cada X minutos (configurable) se ejecuta un scan automatico.</li>
-                    <li>Por cada cuenta activa, se extraen los ultimos ~30 posts usando
-                        <code>yt-dlp</code> (solo metadata, sin descargar video).</li>
-                    <li>Se compara contra la base de datos. Los posts nuevos se guardan.</li>
-                    <li>Los posts con mas de <strong>24 horas</strong> de antiguedad se eliminan automaticamente
-                        (ventana rolling).</li>
-                    <li>Si una cuenta falla (ej: cuenta privada, error de red), se loguea el error
-                        y se continua con la siguiente.</li>
-                </ol>
-
-                <h3>Ciclo de escaneo Instagram</h3>
-                <ol>
-                    <li>Scheduler independiente con su propio intervalo (default 30 min).</li>
-                    <li>Por cada cuenta IG activa, se extraen los ultimos ~20 posts usando
-                        <code>instaloader</code> con sesion autenticada. Solo se guardan <strong>Reels</strong> (videos).</li>
-                    <li>Se hace upsert: posts nuevos se insertan, stats de existentes se actualizan.</li>
-                    <li>Los reels con mas de <strong>24 horas</strong> se purgan igual que TikTok.</li>
-                    <li>Pausa de <strong>10 segundos</strong> entre perfiles para evitar rate limiting.</li>
-                    <li>Si instaloader pide esperar mas de 120 seg, se aborta ese perfil y se continua.</li>
-                </ol>
-
-                <h3>Ventana de 24 horas</h3>
-                <p>
-                    Solo se retienen posts descubiertos en las ultimas 24 horas (ambas plataformas).
-                    Despues de cada scan los mas viejos se purgan automaticamente.
-                </p>
-
-                <h3>Stack tecnico</h3>
-                <div class="def-list">
-                    <div class="def-item">
-                        <div class="def-key">Backend</div>
-                        <div class="def-val">Python 3.11 + Flask</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key">Scraping TikTok</div>
-                        <div class="def-val">yt-dlp (metadata only)</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key">Scraping Instagram</div>
-                        <div class="def-val">instaloader (sesion autenticada, solo Reels)</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key">Scheduler</div>
-                        <div class="def-val">APScheduler (2 jobs independientes: TikTok + IG)</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key">Base de datos</div>
-                        <div class="def-val">SQLite (WAL mode)</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key">Frontend</div>
-                        <div class="def-val">HTML + CSS + JS vanilla (tabs por plataforma)</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key">Acceso publico</div>
-                        <div class="def-val">Cloudflare Tunnel (HTTPS)</div>
-                    </div>
+    <main class="page">
+        <section class="hero">
+            <h1>Documentación del monitor</h1>
+            <p>Aplicación Flask para monitorear cuentas de TikTok, persistir posts recientes en SQLite y exponer un dashboard con autenticación y API JSON.</p>
+            <div class="grid">
+                <div class="stat">
+                    <div class="stat-label">Scraper</div>
+                    <div class="stat-value"><code>yt-dlp</code> sobre perfiles de TikTok</div>
                 </div>
-            </section>
-
-            <!-- ──── Instagram Reels ────────────────────────── -->
-            <section class="card" id="instagram">
-                <h2>Instagram Reels</h2>
-
-                <h3>Requisitos</h3>
-                <p>
-                    Instagram bloquea requests sin autenticar (429 inmediato). Por eso se requiere
-                    una sesion de instaloader generada con credenciales reales.
-                </p>
-
-                <h3>Setup inicial (una sola vez)</h3>
-<pre><code><span class="cmd-comment"># 1. Activar el venv</span>
-<span class="cmd-line">cd /home/diego/Documents/tiktokscrap
-source venv/bin/activate</span>
-
-<span class="cmd-comment"># 2. Generar session file (pide password por terminal)</span>
-<span class="cmd-line">instaloader <span class="cmd-flag">--login</span> TU_USUARIO_IG</span>
-
-<span class="cmd-comment"># 3. Configurar en .env</span>
-<span class="cmd-line">IG_SESSION_USER=TU_USUARIO_IG</span>
-
-<span class="cmd-comment"># 4. Reiniciar servicio</span>
-<span class="cmd-line">sudo systemctl restart tiktok-monitor</span></code></pre>
-
-                <div class="note">
-                    <span class="note-label">Nota</span>
-                    La sesion se guarda en <code>~/.config/instaloader/session-USERNAME</code>.
-                    Si Instagram invalida la sesion (cambio de password, sospecha de bot, etc.),
-                    hay que regenerarla corriendo <code>instaloader --login USERNAME</code> de nuevo.
+                <div class="stat">
+                    <div class="stat-label">Persistencia</div>
+                    <div class="stat-value">SQLite local en <code>data/tiktok.db</code></div>
                 </div>
-
-                <h3>Que scrapea</h3>
-                <ul>
-                    <li>Solo <strong>Reels</strong> (posts de video). Fotos y carruseles se ignoran.</li>
-                    <li>De cada reel: shortcode, caption, fecha, views, likes, comments, thumbnail.</li>
-                    <li>Solo cuentas publicas (o que siga el usuario de la sesion).</li>
-                </ul>
-
-                <h3>Diferencias con TikTok</h3>
-                <table>
-                    <thead>
-                        <tr><th></th><th>TikTok</th><th>Instagram</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><strong>Scraper</strong></td><td>yt-dlp (sin auth)</td><td>instaloader (sesion)</td></tr>
-                        <tr><td><strong>Auth</strong></td><td>No requiere</td><td>Session file obligatorio</td></tr>
-                        <tr><td><strong>Pausa entre perfiles</strong></td><td>3 seg</td><td>10 seg</td></tr>
-                        <tr><td><strong>Posts por perfil</strong></td><td>~30</td><td>~20 (solo videos)</td></tr>
-                        <tr><td><strong>Stat: reposts</strong></td><td>Si</td><td>No</td></tr>
-                        <tr><td><strong>Scheduler</strong></td><td>Independiente</td><td>Independiente</td></tr>
-                    </tbody>
-                </table>
-            </section>
-
-            <!-- ──── Guia de uso ──────────────────────────── -->
-            <section class="card" id="uso">
-                <h2>Guia de uso</h2>
-
-                <h3>Login</h3>
-                <p>
-                    Al acceder por primera vez se pide un password. Se guarda en una cookie
-                    por 30 dias, no hace falta loguearse cada vez.
-                </p>
-
-                <h3>Tabs: TikTok e Instagram</h3>
-                <p>
-                    El dashboard tiene dos tabs arriba: <strong>TikTok</strong> (por defecto) e
-                    <strong>Instagram</strong>. Cada tab tiene su propia lista de cuentas, scanner
-                    independiente, timeline y filtros. Funcionan de forma identica pero contra
-                    plataformas distintas.
-                </p>
-
-                <h3>Agregar cuentas</h3>
-                <ol>
-                    <li>Selecciona el tab de la plataforma (TikTok o Instagram).</li>
-                    <li>En la seccion <strong>Cuentas</strong>, escribi el username (con o sin @).</li>
-                    <li>Click en <strong>Agregar</strong> o presiona Enter.</li>
-                    <li>La cuenta aparece como chip. Se puede agregar hasta ~10 cuentas por plataforma.</li>
-                </ol>
-                <div class="note">
-                    <span class="note-label">Nota</span>
-                    El username se normaliza: se quita el @, se pasa a minusculas.
-                    Ejemplo: <code>@Khaby.Lame</code> se guarda como <code>khaby.lame</code>.
+                <div class="stat">
+                    <div class="stat-label">Scheduler</div>
+                    <div class="stat-value">Auto-scan periódico con APScheduler</div>
                 </div>
-
-                <h3>Eliminar cuentas</h3>
-                <p>
-                    Click en la <strong>x</strong> del chip. Se elimina la cuenta y todos sus posts/reels
-                    de la base de datos (cascade).
-                </p>
-
-                <h3>Escanear</h3>
-                <ul>
-                    <li><strong>Automatico:</strong> cada plataforma tiene su propio scheduler con intervalo
-                        independiente. El toggle <strong>Auto ON/OFF</strong> y el intervalo se configuran
-                        por separado en cada tab.</li>
-                    <li><strong>Manual:</strong> click en <strong>Escanear ahora</strong> dentro del tab correspondiente.</li>
-                </ul>
-
-                <h3>Cambiar intervalo de escaneo</h3>
-                <p>
-                    En cada tab, al lado del boton de escanear, hay un input numerico que dice
-                    <code>cada [30] min</code>. Cambia el numero y se aplica al instante.
-                    Rango: 1 a 1440 minutos (24 horas). Cada plataforma tiene su propio intervalo.
-                </p>
-
-                <h3>Filtrar posts</h3>
-                <p>
-                    Arriba del feed hay chips de filtro: <strong>Todos</strong> y uno por cada cuenta.
-                    Click para filtrar. El feed muestra los posts mas recientes primero.
-                </p>
-
-                <h3>Ver posts</h3>
-                <p>Cada post/reel muestra:</p>
-                <ul>
-                    <li><strong>@username</strong> del autor con avatar</li>
-                    <li><strong>Horarios</strong> en 4 zonas (ver abajo)</li>
-                    <li><strong>Descripcion/caption</strong> completa (hashtags, etc.)</li>
-                    <li><strong>Stats</strong>: views, likes, comments (y reposts en TikTok)</li>
-                    <li><strong>Thumbnail</strong> del video</li>
-                    <li><strong>Link directo</strong> al video en la plataforma</li>
-                </ul>
-
-                <h3>Metricas del topbar</h3>
-                <p>
-                    La barra superior muestra resumen de ambas plataformas: ultimo scan, cantidad de
-                    cuentas y posts para TikTok (<strong>TT</strong>) e Instagram (<strong>IG</strong>).
-                </p>
-            </section>
-
-            <!-- ──── Zonas horarias ───────────────────────── -->
-            <section class="card" id="horarios">
-                <h2>Zonas horarias</h2>
-                <p>Cada post muestra la hora de publicacion en 4 zonas:</p>
-                <table>
-                    <thead>
-                        <tr><th>Label</th><th>Zona</th><th>Ciudad</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><strong>AR</strong></td><td>America/Argentina/Buenos_Aires</td><td>Buenos Aires (UTC-3)</td></tr>
-                        <tr><td><strong>SF</strong></td><td>America/Los_Angeles</td><td>San Francisco (UTC-7/-8)</td></tr>
-                        <tr><td><strong>LDN</strong></td><td>Europe/London</td><td>Londres (UTC+0/+1)</td></tr>
-                        <tr><td><strong>HK</strong></td><td>Asia/Hong_Kong</td><td>Hong Kong (UTC+8)</td></tr>
-                    </tbody>
-                </table>
-                <p>El formato es: <code>dd Mon HH:MM</code> (ej: <code>28 Feb 15:30</code>).</p>
-                <div class="note note-info">
-                    <span class="note-label">Info</span>
-                    Si el post no tiene fecha de publicacion (raro), se muestra la hora
-                    en que fue descubierto por el scanner.
-                </div>
-            </section>
-
-            <!-- ──── API Reference ────────────────────────── -->
-            <section class="card" id="api">
-                <h2>API TikTok</h2>
-                <p>Todas las rutas requieren autenticacion (cookie de sesion).</p>
-
-                <div class="api-list">
-                    <div class="api-item">
-                        <div><span class="badge badge-get">GET</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/accounts</code></div>
-                            <div class="api-desc">Lista de cuentas activas</div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-post">POST</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/accounts</code></div>
-                            <div class="api-desc">Agregar cuenta. Body: <code>{"username": "x"}</code></div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-delete">DEL</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/accounts/&lt;user&gt;</code></div>
-                            <div class="api-desc">Eliminar cuenta + posts</div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-get">GET</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/posts</code></div>
-                            <div class="api-desc">Posts. Params: <code>?username=x&amp;limit=50&amp;offset=0</code></div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-post">POST</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/scan</code></div>
-                            <div class="api-desc">Ejecutar scan manual</div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-get">GET</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/status</code></div>
-                            <div class="api-desc">Ultimo scan, proximo scan, intervalo</div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-post">POST</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/autoscan</code></div>
-                            <div class="api-desc">Toggle auto-scan TikTok. Body: <code>{"enabled": true}</code></div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-post">POST</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/interval</code></div>
-                            <div class="api-desc">Cambiar intervalo. Body: <code>{"minutes": 15}</code></div>
-                        </div>
-                    </div>
-                </div>
-
-                <h3>Ejemplo con curl</h3>
-<pre><code><span class="cmd-comment"># Login y guardar cookie</span>
-<span class="cmd-line">curl <span class="cmd-flag">-c</span> cookies.txt <span class="cmd-flag">-d</span> "password=TU_PASSWORD" <span class="cmd-flag">-L</span> <span class="cmd-url">https://tiktok.diegodella.ar/login</span></span>
-
-<span class="cmd-comment"># Agregar cuenta</span>
-<span class="cmd-line">curl <span class="cmd-flag">-b</span> cookies.txt <span class="cmd-flag">-X POST</span> <span class="cmd-url">https://tiktok.diegodella.ar/api/accounts</span> \
-  <span class="cmd-flag">-H</span> "Content-Type: application/json" \
-  <span class="cmd-flag">-d</span> '{"username": "khaby.lame"}'</span>
-
-<span class="cmd-comment"># Scan manual</span>
-<span class="cmd-line">curl <span class="cmd-flag">-b</span> cookies.txt <span class="cmd-flag">-X POST</span> <span class="cmd-url">https://tiktok.diegodella.ar/api/scan</span></span>
-
-<span class="cmd-comment"># Ver posts</span>
-<span class="cmd-line">curl <span class="cmd-flag">-b</span> cookies.txt <span class="cmd-url">https://tiktok.diegodella.ar/api/posts?limit=10</span></span></code></pre>
-            </section>
-
-            <!-- ──── API Instagram ───────────────────────── -->
-            <section class="card" id="api-ig">
-                <h2>API Instagram</h2>
-                <p>Misma estructura que TikTok, con prefijo <code>/api/ig/</code>. Requieren autenticacion.</p>
-
-                <div class="api-list">
-                    <div class="api-item">
-                        <div><span class="badge badge-get">GET</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/ig/accounts</code></div>
-                            <div class="api-desc">Lista de cuentas IG activas</div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-post">POST</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/ig/accounts</code></div>
-                            <div class="api-desc">Agregar cuenta IG. Body: <code>{"username": "x"}</code></div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-delete">DEL</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/ig/accounts/&lt;user&gt;</code></div>
-                            <div class="api-desc">Eliminar cuenta IG + reels</div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-get">GET</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/ig/posts</code></div>
-                            <div class="api-desc">Reels. Params: <code>?username=x&amp;limit=50&amp;offset=0</code></div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-post">POST</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/ig/scan</code></div>
-                            <div class="api-desc">Ejecutar scan IG manual</div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-get">GET</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/ig/status</code></div>
-                            <div class="api-desc">Ultimo scan IG, proximo scan, intervalo</div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-post">POST</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/ig/autoscan</code></div>
-                            <div class="api-desc">Toggle auto-scan IG. Body: <code>{"enabled": true}</code></div>
-                        </div>
-                    </div>
-
-                    <div class="api-item">
-                        <div><span class="badge badge-post">POST</span></div>
-                        <div>
-                            <div class="api-endpoint"><code>/api/ig/interval</code></div>
-                            <div class="api-desc">Cambiar intervalo IG. Body: <code>{"minutes": 30}</code></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ──── Administracion ───────────────────────── -->
-            <section class="card" id="admin">
-                <h2>Administracion</h2>
-
-                <h3>Servicio systemd</h3>
-                <p>El monitor corre como servicio del sistema. Se inicia automaticamente al prender la maquina.</p>
-<pre><code><span class="cmd-comment"># Ver estado</span>
-<span class="cmd-line">sudo systemctl status tiktok-monitor</span>
-
-<span class="cmd-comment"># Reiniciar</span>
-<span class="cmd-line">sudo systemctl restart tiktok-monitor</span>
-
-<span class="cmd-comment"># Ver logs en vivo</span>
-<span class="cmd-line">sudo journalctl <span class="cmd-flag">-u</span> tiktok-monitor <span class="cmd-flag">-f</span></span>
-
-<span class="cmd-comment"># Parar</span>
-<span class="cmd-line">sudo systemctl stop tiktok-monitor</span></code></pre>
-
-                <h3>Archivos</h3>
-                <div class="def-list">
-                    <div class="def-item">
-                        <div class="def-key"><code>app.py</code></div>
-                        <div class="def-val">Servidor Flask + schedulers (TikTok + IG) + rutas</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key"><code>scraper.py</code></div>
-                        <div class="def-val">Extraccion TikTok via yt-dlp</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key"><code>ig_scraper.py</code></div>
-                        <div class="def-val">Extraccion Instagram Reels via instaloader</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key"><code>db.py</code></div>
-                        <div class="def-val">Capa de base de datos SQLite (tablas TikTok + IG)</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key"><code>templates/</code></div>
-                        <div class="def-val">Dashboard, login, docs</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key"><code>data/tiktok.db</code></div>
-                        <div class="def-val">Base de datos (auto-creada, incluye tablas ig_*)</div>
-                    </div>
-                    <div class="def-item">
-                        <div class="def-key"><code>.env</code></div>
-                        <div class="def-val">Password, intervalos y sesion IG</div>
-                    </div>
-                </div>
-
-                <h3>Configuracion (.env)</h3>
-<pre><code><span class="cmd-line">MONITOR_PASSWORD=tu_password_aqui
-SCAN_INTERVAL_MINUTES=30
-IG_SCAN_INTERVAL_MINUTES=30
-IG_SESSION_USER=tu_usuario_ig</span></code></pre>
-                <div class="note">
-                    <span class="note-label">Nota</span>
-                    Los intervalos del .env son solo valores iniciales. Una vez que los cambias
-                    desde el dashboard, se aplican en memoria hasta el proximo restart del servicio.
-                </div>
-
-                <h3>Actualizar scrapers</h3>
-                <p>
-                    Si un scan deja de funcionar, actualizar las librerias suele resolverlo:
-                </p>
-<pre><code><span class="cmd-line">cd /home/diego/Documents/tiktokscrap
-source venv/bin/activate</span>
-
-<span class="cmd-comment"># TikTok</span>
-<span class="cmd-line">pip install <span class="cmd-flag">-U</span> yt-dlp</span>
-
-<span class="cmd-comment"># Instagram</span>
-<span class="cmd-line">pip install <span class="cmd-flag">-U</span> instaloader</span>
-
-<span class="cmd-line">sudo systemctl restart tiktok-monitor</span></code></pre>
-
-                <h3>Regenerar sesion de Instagram</h3>
-                <p>
-                    Si IG invalida la sesion (cambiaste password, sospecha de bot, etc.):
-                </p>
-<pre><code><span class="cmd-line">cd /home/diego/Documents/tiktokscrap
-source venv/bin/activate
-instaloader <span class="cmd-flag">--login</span> TU_USUARIO_IG</span>
-<span class="cmd-comment"># Ingresa password cuando lo pida</span>
-<span class="cmd-line">sudo systemctl restart tiktok-monitor</span></code></pre>
-            </section>
-
-            <!-- ──── Limites ──────────────────────────────── -->
-            <section class="card" id="limites">
-                <h2>Limites y consideraciones</h2>
-
-                <h3>TikTok</h3>
-                <ul>
-                    <li><strong>~10 cuentas recomendado.</strong> Cada cuenta tarda ~3 seg.
-                        Con 10 cuentas, un scan toma ~30 seg.</li>
-                    <li><strong>Solo cuentas publicas.</strong> Cuentas privadas dan error (se loguea y se sigue).</li>
-                    <li><strong>No descarga video.</strong> Solo extrae metadata.</li>
-                    <li><strong>Rate limiting.</strong> 3 segundos de pausa entre cuentas.</li>
-                </ul>
-
-                <h3>Instagram</h3>
-                <ul>
-                    <li><strong>Sesion obligatoria.</strong> Sin <code>IG_SESSION_USER</code> configurado,
-                        el scan IG falla con 429.</li>
-                    <li><strong>Solo Reels (video).</strong> Fotos y carruseles se ignoran.</li>
-                    <li><strong>~10 cuentas recomendado.</strong> Cada cuenta tarda ~10 seg (pausa mas larga).
-                        Con 10 cuentas, un scan toma ~2 min.</li>
-                    <li><strong>Rate limiting estricto.</strong> Si instaloader pide esperar mas de 120 seg,
-                        se aborta ese perfil. Instagram es mas agresivo que TikTok con limits.</li>
-                    <li><strong>Cuentas privadas:</strong> solo funcionan si el usuario de la sesion las sigue.</li>
-                </ul>
-
-                <h3>General</h3>
-                <ul>
-                    <li><strong>Retencion 24hs.</strong> Los posts/reels se purgan automaticamente. No es un archivo historico.</li>
-                    <li><strong>Sin notificaciones push.</strong> Es un dashboard de consulta.</li>
-                    <li><strong>Puerto 3457.</strong> Acceso local en <code>http://192.168.1.14:3457</code>,
-                        publico en <code>https://tiktok.diegodella.ar</code>.</li>
-                </ul>
-            </section>
-
-            <!-- ──── Troubleshooting ──────────────────────── -->
-            <section class="card" id="troubleshooting">
-                <h2>Troubleshooting</h2>
-
-                <h3>Instagram: scan devuelve 0 reels</h3>
-                <p>
-                    <strong>Causa mas comun: rate limit (429).</strong> Instagram bloquea la sesion
-                    temporalmente si se hacen muchas requests. El bloqueo dura ~30 minutos.
-                </p>
-                <p>Que hacer:</p>
-                <ol>
-                    <li>Esperar 30 minutos sin hacer scans manuales.</li>
-                    <li>No agregar muchas cuentas IG de golpe (cada add no hace API call, pero el primer scan
-                        si hace 1 request por cuenta).</li>
-                    <li>Revisar logs: <code>tail -50 /tmp/tiktokscrap.log | grep -i "rate\|429\|ig"</code></li>
-                    <li>Si el log dice <code>likely rate-limited</code>, confirma que es un bloqueo temporal.</li>
-                </ol>
-
-                <h3>Instagram: "No session file found"</h3>
-                <p>
-                    La sesion de instaloader no existe o fue borrada. Hay que regenerarla:
-                </p>
-<pre><code><span class="cmd-line">cd /home/diego/Documents/tiktokscrap
-source venv/bin/activate
-instaloader <span class="cmd-flag">--login</span> TU_USUARIO_IG</span>
-<span class="cmd-comment"># Ingresa password, luego reiniciar servicio</span>
-<span class="cmd-line">sudo systemctl restart tiktok-monitor</span></code></pre>
-                <div class="note">
-                    <span class="note-label">Importante</span>
-                    Este comando se corre desde una <strong>terminal interactiva</strong> (SSH o consola),
-                    no desde la UI web. Pide el password por teclado.
-                </div>
-
-                <h3>Instagram: sesion invalidada</h3>
-                <p>Causas posibles:</p>
-                <ul>
-                    <li>Cambiaste la password de Instagram.</li>
-                    <li>Instagram detecto actividad sospechosa y forzo logout.</li>
-                    <li>Sesion expirada por tiempo (raro, pero pasa).</li>
-                </ul>
-                <p>
-                    Solucion: regenerar sesion con <code>instaloader --login USERNAME</code>.
-                    Si Instagram pide verificacion 2FA, seguir las instrucciones en terminal.
-                </p>
-
-                <h3>Instagram: cuentas privadas</h3>
-                <p>
-                    Solo se pueden scrapear cuentas que sean publicas <strong>o</strong> que el usuario
-                    de la sesion (<code>IG_SESSION_USER</code>) siga. Si una cuenta es privada y no la
-                    seguis, el log dira <code>private profile</code> y se saltea.
-                </p>
-
-                <h3>TikTok: scan no trae posts</h3>
-                <p>
-                    TikTok cambia su estructura seguido. Si deja de funcionar:
-                </p>
-<pre><code><span class="cmd-line">source venv/bin/activate
-pip install <span class="cmd-flag">-U</span> yt-dlp
-sudo systemctl restart tiktok-monitor</span></code></pre>
-
-                <h3>El dashboard carga pero no muestra datos</h3>
-                <ul>
-                    <li>Verifica que el servicio este corriendo: <code>sudo systemctl status tiktok-monitor</code></li>
-                    <li>Verifica logs: <code>tail -20 /tmp/tiktokscrap.log</code></li>
-                    <li>Verifica que haya cuentas activas en el tab correspondiente.</li>
-                    <li>Ejecuta un scan manual desde el boton "Escanear ahora".</li>
-                </ul>
-
-                <h3>Cuantas cuentas IG se pueden monitorear?</h3>
-                <p>
-                    Recomendado: <strong>maximo 10 cuentas</strong>. Con 10 cuentas y 10 seg de pausa entre
-                    cada una, un scan toma ~2 minutos. Instagram tiene limites estrictos; muchas cuentas
-                    aumentan la chance de 429. El intervalo minimo recomendado para IG es <strong>30 minutos</strong>.
-                </p>
-
-                <h3>Se puede usar sin sesion de Instagram?</h3>
-                <p>
-                    <strong>No.</strong> Sin <code>IG_SESSION_USER</code> configurado, Instagram bloquea
-                    con 429 en la primera request. La sesion autenticada es obligatoria.
-                    TikTok en cambio funciona sin autenticacion.
-                </p>
-            </section>
-
-            <div class="footer-back">
-                <a href="/" class="btn-dash">Volver al Dashboard</a>
             </div>
+        </section>
 
-        </main>
-    </div>
+        <section class="card">
+            <h2>Variables de entorno</h2>
+            <p>Configuración mínima recomendada:</p>
+            <pre><code>MONITOR_PASSWORD=tu_password
+SCAN_INTERVAL_MINUTES=30
+SLACK_WEBHOOK_URL=</code></pre>
+            <h3>Notas</h3>
+            <ul>
+                <li>Si <code>MONITOR_PASSWORD</code> está vacío, la app queda sin login.</li>
+                <li><code>SCAN_INTERVAL_MINUTES</code> controla el job automático de TikTok.</li>
+                <li><code>SLACK_WEBHOOK_URL</code> es opcional y solo se usa para avisar posts nuevos.</li>
+            </ul>
+        </section>
 
-    <!-- ── Mobile floating back button ────────────────── -->
-    <div class="mobile-back">
-        <a href="/" class="btn-dash">Volver al Dashboard</a>
-    </div>
+        <section class="card">
+            <h2>Ejecución</h2>
+            <pre><code>python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python app.py</code></pre>
+            <p>La app escucha por defecto en <code>http://localhost:3457</code>.</p>
+        </section>
 
-    <!-- ── Active nav highlight on scroll ─────────────── -->
-    <script>
-        (function() {
-            const links = document.querySelectorAll('.sidebar nav a');
-            const sections = [];
-            links.forEach(function(link) {
-                var id = link.getAttribute('href').slice(1);
-                var el = document.getElementById(id);
-                if (el) sections.push({ id: id, el: el, link: link });
-            });
+        <section class="card">
+            <h2>Endpoints</h2>
+            <div class="api-list">
+                <div class="api-item">
+                    <span class="method get">GET</span><span class="endpoint">/api/accounts</span>
+                    <div class="desc">Lista las cuentas activas monitoreadas.</div>
+                </div>
+                <div class="api-item">
+                    <span class="method post">POST</span><span class="endpoint">/api/accounts</span>
+                    <div class="desc">Agrega una cuenta. Body: <code>{"username":"usuario"}</code>.</div>
+                </div>
+                <div class="api-item">
+                    <span class="method delete">DELETE</span><span class="endpoint">/api/accounts/&lt;username&gt;</span>
+                    <div class="desc">Elimina la cuenta y sus posts asociados.</div>
+                </div>
+                <div class="api-item">
+                    <span class="method get">GET</span><span class="endpoint">/api/posts</span>
+                    <div class="desc">Lista posts. Soporta <code>username</code>, <code>limit</code> y <code>offset</code>.</div>
+                </div>
+                <div class="api-item">
+                    <span class="method get">GET</span><span class="endpoint">/api/posts/counts</span>
+                    <div class="desc">Devuelve cantidad de posts por cuenta y el total.</div>
+                </div>
+                <div class="api-item">
+                    <span class="method post">POST</span><span class="endpoint">/api/scan</span>
+                    <div class="desc">Dispara un scan manual inmediato.</div>
+                </div>
+                <div class="api-item">
+                    <span class="method get">GET</span><span class="endpoint">/api/status</span>
+                    <div class="desc">Estado del scheduler, último scan y progreso si hay uno corriendo.</div>
+                </div>
+                <div class="api-item">
+                    <span class="method post">POST</span><span class="endpoint">/api/autoscan</span>
+                    <div class="desc">Activa o pausa el job automático. Body: <code>{"enabled":true}</code>.</div>
+                </div>
+                <div class="api-item">
+                    <span class="method post">POST</span><span class="endpoint">/api/interval</span>
+                    <div class="desc">Cambia el intervalo del scheduler. Body: <code>{"minutes":30}</code>.</div>
+                </div>
+            </div>
+        </section>
 
-            function update() {
-                var scrollY = window.scrollY + 120;
-                var current = sections[0];
-                for (var i = 0; i < sections.length; i++) {
-                    if (sections[i].el.offsetTop <= scrollY) {
-                        current = sections[i];
-                    }
-                }
-                links.forEach(function(l) { l.classList.remove('active'); });
-                if (current) current.link.classList.add('active');
-            }
-
-            window.addEventListener('scroll', update, { passive: true });
-            update();
-        })();
-    </script>
-
+        <section class="card">
+            <h2>Estructura del proyecto</h2>
+            <pre><code>app.py              Flask app, rutas y scheduler
+db.py               Esquema SQLite y operaciones CRUD
+scraper.py          Extracción de posts y avatares de TikTok
+templates/index.html Dashboard principal
+templates/login.html Pantalla de login
+templates/docs.html  Esta documentación
+data/tiktok.db      Base local SQLite</code></pre>
+        </section>
+    </main>
 </body>
 </html>
