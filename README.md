@@ -7,6 +7,7 @@ Monitor self-hosted de perfiles de TikTok. Escanea cuentas periódicamente, guar
 - **TikTok scraping** via [yt-dlp](https://github.com/yt-dlp/yt-dlp) — extrae posts recientes, stats (views, likes, comments, reposts) y thumbnails
 - **Dashboard web** con auth por password, gestión de cuentas y visualización de posts
 - **Panel `/admin`** para configurar Slack y reglas de alertas por views/tiempo
+- **Google Trends** por país desde `/admin`, con alertas periódicas a Slack usando la ventana de 4 horas
 - **Auto-scan** configurable (intervalo en minutos, pause/resume desde la UI)
 - **Scan manual** on-demand desde el dashboard
 - **Purge automático** de posts viejos (+24h)
@@ -67,6 +68,11 @@ El panel de administración queda en `http://localhost:3457/admin`.
 | PUT | `/api/admin/rules/<id>` | Editar regla |
 | DELETE | `/api/admin/rules/<id>` | Eliminar regla |
 | POST | `/api/admin/alerts/run` | Ejecutar evaluación manual |
+| GET | `/api/admin/trends/configs` | Listar configs de Google Trends |
+| POST | `/api/admin/trends/configs` | Crear config de país/frecuencia |
+| PUT | `/api/admin/trends/configs/<id>` | Editar config Trends |
+| DELETE | `/api/admin/trends/configs/<id>` | Eliminar config Trends |
+| POST | `/api/admin/trends/run` | Ejecutar Google Trends manualmente |
 
 Todos los endpoints requieren autenticación (cookie o password).
 

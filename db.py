@@ -76,6 +76,30 @@ def init_db():
             FOREIGN KEY (rule_id) REFERENCES alert_rules(id) ON DELETE CASCADE,
             UNIQUE(rule_id, video_id)
         );
+
+        CREATE TABLE IF NOT EXISTS trend_alert_configs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            country_code TEXT NOT NULL,
+            check_every_minutes INTEGER NOT NULL,
+            slack_channel TEXT,
+            enabled INTEGER DEFAULT 1,
+            last_checked_at TEXT,
+            last_sent_at TEXT,
+            last_error TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS trend_alert_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            config_id INTEGER NOT NULL,
+            started_at TEXT,
+            finished_at TEXT,
+            items_count INTEGER DEFAULT 0,
+            sent_count INTEGER DEFAULT 0,
+            error TEXT,
+            FOREIGN KEY (config_id) REFERENCES trend_alert_configs(id) ON DELETE CASCADE
+        );
     """)
     # Migrate existing DBs — add columns if missing
     migrations = [
@@ -370,6 +394,93 @@ def record_alert_event(rule_id, video_id, view_count):
         """INSERT OR IGNORE INTO alert_events (rule_id, video_id, view_count, notified_at)
            VALUES (?, ?, ?, datetime('now'))""",
         (rule_id, video_id, view_count),
+    )
+    conn.commit()
+    conn.close()
+
+
+def list_trend_alert_configs():
+    conn = _connect()
+    rows = conn.execute("SELECT * FROM trend_alert_configs ORDER BY created_at DESC, id DESC").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_enabled_trend_alert_configs():
+    conn = _connect()
+    rows = conn.execute("SELECT * FROM trend_alert_configs WHERE enabled = 1 ORDER BY id").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def save_trend_alert_config(config_id, payload):
+    conn = _connect()
+    cursor = conn.cursor()
+    data = (
+        payload["country_code"],
+        payload["check_every_minutes"],
+        payload.get("slack_channel"),
+        1 if payload.get("enabled", True) else 0,
+    )
+    if config_id is None:
+        cursor.execute(
+            """INSERT INTO trend_alert_configs (
+                   country_code, check_every_minutes, slack_channel, enabled, updated_at
+               ) VALUES (?, ?, ?, ?, datetime('now'))""",
+            data,
+        )
+        current_id = cursor.lastrowid
+    else:
+        cursor.execute(
+            """UPDATE trend_alert_configs
+               SET country_code = ?,
+                   check_every_minutes = ?,
+                   slack_channel = ?,
+                   enabled = ?,
+                   updated_at = datetime('now')
+               WHERE id = ?""",
+            (*data, config_id),
+        )
+        current_id = config_id
+    conn.commit()
+    row = conn.execute("SELECT * FROM trend_alert_configs WHERE id = ?", (current_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def delete_trend_alert_config(config_id):
+    conn = _connect()
+    conn.execute("DELETE FROM trend_alert_configs WHERE id = ?", (config_id,))
+    conn.commit()
+    conn.close()
+
+
+def mark_trend_alert_checked(config_id, checked_at, last_error=None, sent=False):
+    conn = _connect()
+    if sent:
+        conn.execute(
+            """UPDATE trend_alert_configs
+               SET last_checked_at = ?, last_sent_at = ?, last_error = ?, updated_at = datetime('now')
+               WHERE id = ?""",
+            (checked_at, checked_at, last_error, config_id),
+        )
+    else:
+        conn.execute(
+            """UPDATE trend_alert_configs
+               SET last_checked_at = ?, last_error = ?, updated_at = datetime('now')
+               WHERE id = ?""",
+            (checked_at, last_error, config_id),
+        )
+    conn.commit()
+    conn.close()
+
+
+def add_trend_alert_run(config_id, started_at, finished_at, items_count, sent_count, error=None):
+    conn = _connect()
+    conn.execute(
+        """INSERT INTO trend_alert_runs (config_id, started_at, finished_at, items_count, sent_count, error)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (config_id, started_at, finished_at, items_count, sent_count, error),
     )
     conn.commit()
     conn.close()

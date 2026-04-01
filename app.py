@@ -11,6 +11,7 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for, m
 from apscheduler.schedulers.background import BackgroundScheduler
 
 import db
+import google_trends
 import scraper
 
 load_dotenv()
@@ -25,6 +26,7 @@ SCAN_INTERVAL = int(os.getenv("SCAN_INTERVAL_MINUTES", "30"))
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 AUTH_COOKIE = "tiktok_auth"
 ALERT_SCAN_INTERVAL = 1
+TREND_SCAN_INTERVAL = 1
 
 # Auth token: deterministic hash so it survives restarts
 _AUTH_TOKEN = hashlib.sha256(MONITOR_PASSWORD.encode()).hexdigest() if MONITOR_PASSWORD else ""
@@ -293,6 +295,70 @@ def api_admin_alert_status():
     return jsonify(get_alert_status())
 
 
+def _validate_trend_config_payload(data):
+    country_code = (data.get("country_code") or "").strip().upper()
+    slack_channel = (data.get("slack_channel") or "").strip() or None
+    try:
+        check_every_minutes = int(data.get("check_every_minutes"))
+    except (TypeError, ValueError):
+        return None, "check_every_minutes es inválido"
+
+    if len(country_code) != 2 or not country_code.isalpha():
+        return None, "country_code debe ser un código ISO de 2 letras"
+    if check_every_minutes < 1 or check_every_minutes > 1440:
+        return None, "check_every_minutes debe estar entre 1 y 1440"
+
+    return {
+        "country_code": country_code,
+        "check_every_minutes": check_every_minutes,
+        "slack_channel": slack_channel,
+        "enabled": bool(data.get("enabled", True)),
+    }, None
+
+
+@app.route("/api/admin/trends/configs", methods=["GET"])
+@require_auth
+def api_admin_trend_configs():
+    return jsonify(db.list_trend_alert_configs())
+
+
+@app.route("/api/admin/trends/configs", methods=["POST"])
+@require_auth
+def api_admin_create_trend_config():
+    payload, error = _validate_trend_config_payload(request.get_json(force=True))
+    if error:
+        return jsonify({"error": error}), 400
+    return jsonify(db.save_trend_alert_config(None, payload)), 201
+
+
+@app.route("/api/admin/trends/configs/<int:config_id>", methods=["PUT"])
+@require_auth
+def api_admin_update_trend_config(config_id):
+    payload, error = _validate_trend_config_payload(request.get_json(force=True))
+    if error:
+        return jsonify({"error": error}), 400
+    return jsonify(db.save_trend_alert_config(config_id, payload))
+
+
+@app.route("/api/admin/trends/configs/<int:config_id>", methods=["DELETE"])
+@require_auth
+def api_admin_delete_trend_config(config_id):
+    db.delete_trend_alert_config(config_id)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/trends/run", methods=["POST"])
+@require_auth
+def api_admin_run_trend_alerts():
+    return jsonify(run_trend_alerts(force=True))
+
+
+@app.route("/api/admin/trends/status", methods=["GET"])
+@require_auth
+def api_admin_trend_status():
+    return jsonify(get_trend_status())
+
+
 # --- Slack Notifications ---
 
 def get_slack_webhook_url():
@@ -482,6 +548,113 @@ def run_alert_rules(force=False):
         _alert_lock.release()
 
 
+def _format_trend_alert(config, trends):
+    lines = [
+        f"*Google Trends {config['country_code']}*",
+        "*Ventana:* últimas 4h",
+        f"*Items:* top {len(trends)} por search volume",
+        "",
+    ]
+    for idx, trend in enumerate(trends, start=1):
+        line = f"{idx}. *{trend['query']}*"
+        details = [trend["search_surge"], trend["approx_traffic"]]
+        if trend.get("started_at"):
+            details.append(f"inició {trend['started_at']}")
+        lines.append(line)
+        lines.append(f"   {' | '.join(details)}")
+        if trend.get("news_title") and trend.get("link"):
+            lines.append(f"   <{trend['link']}|{trend['news_title']}>")
+        elif trend.get("link"):
+            lines.append(f"   <{trend['link']}|Abrir referencia>")
+    return "\n".join(lines)
+
+
+_trend_lock = threading.Lock()
+_trend_status = {
+    "running": False,
+    "last_run_at": None,
+    "checked_configs": 0,
+    "notifications_sent": 0,
+    "errors": [],
+}
+
+
+def get_trend_status():
+    return dict(_trend_status)
+
+
+def _trend_config_is_due(config, now_utc):
+    last_checked = _parse_iso_datetime(config.get("last_checked_at"))
+    if not last_checked:
+        return True
+    elapsed = (now_utc - last_checked).total_seconds() / 60
+    return elapsed >= int(config["check_every_minutes"])
+
+
+def _run_single_trend_config(config, now_utc):
+    started_at = now_utc.isoformat()
+    try:
+        trends = google_trends.fetch_trending_searches(config["country_code"], hours=4, sort="search-volume", limit=10)
+        if not trends:
+            db.mark_trend_alert_checked(config["id"], started_at, last_error=None, sent=False)
+            db.add_trend_alert_run(config["id"], started_at, now_utc.isoformat(), 0, 0, None)
+            return {"items_count": 0, "sent": 0, "error": None}
+
+        ok, error = send_slack_message(_format_trend_alert(config, trends), channel=config.get("slack_channel"))
+        finished_at = datetime.now(timezone.utc).isoformat()
+        db.mark_trend_alert_checked(config["id"], finished_at, last_error=error, sent=ok)
+        db.add_trend_alert_run(config["id"], started_at, finished_at, len(trends), 1 if ok else 0, error)
+        return {"items_count": len(trends), "sent": 1 if ok else 0, "error": error}
+    except Exception as e:
+        finished_at = datetime.now(timezone.utc).isoformat()
+        error = str(e)
+        db.mark_trend_alert_checked(config["id"], finished_at, last_error=error, sent=False)
+        db.add_trend_alert_run(config["id"], started_at, finished_at, 0, 0, error)
+        return {"items_count": 0, "sent": 0, "error": error}
+
+
+def run_trend_alerts(force=False):
+    if not _trend_lock.acquire(blocking=False):
+        return {"message": "Trend evaluation already running", **get_trend_status()}
+
+    now_utc = datetime.now(timezone.utc)
+    checked_configs = 0
+    notifications_sent = 0
+    errors = []
+    _trend_status.update({
+        "running": True,
+        "last_run_at": now_utc.isoformat(),
+        "checked_configs": 0,
+        "notifications_sent": 0,
+        "errors": [],
+    })
+    try:
+        configs = db.get_enabled_trend_alert_configs()
+        for config in configs:
+            if not force and not _trend_config_is_due(config, now_utc):
+                continue
+            checked_configs += 1
+            result = _run_single_trend_config(config, now_utc)
+            notifications_sent += result["sent"]
+            if result["error"]:
+                errors.append(f"{config['country_code']}: {result['error']}")
+        return {
+            "last_run_at": now_utc.isoformat(),
+            "checked_configs": checked_configs,
+            "notifications_sent": notifications_sent,
+            "errors": errors,
+        }
+    finally:
+        _trend_status.update({
+            "running": False,
+            "last_run_at": now_utc.isoformat(),
+            "checked_configs": checked_configs,
+            "notifications_sent": notifications_sent,
+            "errors": errors,
+        })
+        _trend_lock.release()
+
+
 # --- Scan Logic ---
 
 _scan_lock = threading.Lock()
@@ -548,6 +721,7 @@ def _run_scan_inner():
 scheduler = BackgroundScheduler()
 scheduler.add_job(run_scan, "interval", minutes=SCAN_INTERVAL, id="tiktok_scan", replace_existing=True)
 scheduler.add_job(run_alert_rules, "interval", minutes=ALERT_SCAN_INTERVAL, id="alert_rules", replace_existing=True)
+scheduler.add_job(run_trend_alerts, "interval", minutes=TREND_SCAN_INTERVAL, id="trend_alerts", replace_existing=True)
 
 
 if __name__ == "__main__":

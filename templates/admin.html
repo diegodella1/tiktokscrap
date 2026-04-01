@@ -296,11 +296,11 @@
         <section class="hero">
             <div class="hero-card">
                 <h1>Configuración y reglas de alertas</h1>
-                <p>Acá configurás Slack y definís reglas del tipo "si un post llega a X views dentro de X minutos, avisar". El evaluador corre cada minuto y sólo procesa las reglas cuyo intervalo ya venció.</p>
+                <p>Acá configurás Slack, definís reglas TikTok por views y sumás alertas de Google Trends por país. Los evaluadores corren cada minuto y sólo procesan lo que ya venció por frecuencia.</p>
             </div>
             <div class="hero-card stats">
                 <div class="stat">
-                    <div class="stat-label">Última corrida</div>
+                    <div class="stat-label">Última corrida TikTok</div>
                     <div class="stat-value" id="statLastRun">nunca</div>
                 </div>
                 <div class="stat">
@@ -310,6 +310,10 @@
                 <div class="stat">
                     <div class="stat-label">Notificaciones enviadas</div>
                     <div class="stat-value" id="statSent">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Última corrida Trends</div>
+                    <div class="stat-value" id="trendStatLastRun">nunca</div>
                 </div>
             </div>
         </section>
@@ -331,6 +335,7 @@
                     <div class="row-actions">
                         <button class="btn btn-primary" onclick="saveSettings()">Guardar settings</button>
                         <button class="btn" onclick="runAlerts()">Correr evaluación ahora</button>
+                        <button class="btn" onclick="runTrendAlerts()">Correr Trends ahora</button>
                     </div>
                 </div>
 
@@ -381,6 +386,37 @@
                     <div class="empty">Cargando reglas...</div>
                 </div>
             </div>
+
+            <div class="card">
+                <h2>Google Trends</h2>
+                <div class="field">
+                    <label for="trendCountryInput">País</label>
+                    <input id="trendCountryInput" type="text" placeholder="US">
+                    <small>Código ISO de 2 letras. La ventana es fija: últimas 4 horas.</small>
+                </div>
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="trendCheckEveryInput">Avisar cada (min)</label>
+                        <input id="trendCheckEveryInput" type="number" min="1" value="10">
+                    </div>
+                    <div class="field">
+                        <label for="trendChannelInput">Canal Slack</label>
+                        <input id="trendChannelInput" type="text" placeholder="#trends-alerts">
+                    </div>
+                </div>
+                <label class="checks">
+                    <input id="trendEnabledInput" type="checkbox" checked>
+                    <span>Config Trends habilitada</span>
+                </label>
+                <div class="row-actions">
+                    <button class="btn btn-primary" onclick="saveTrendConfig()">Guardar config Trends</button>
+                    <button class="btn" onclick="resetTrendForm()">Limpiar</button>
+                </div>
+                <div style="height: 1rem;"></div>
+                <div id="trendConfigsList" class="stack">
+                    <div class="empty">Cargando configs Trends...</div>
+                </div>
+            </div>
         </section>
     </div>
 
@@ -388,6 +424,7 @@
 
     <script>
         var editingRuleId = null;
+        var editingTrendConfigId = null;
 
         async function api(path, opts) {
             opts = opts || {};
@@ -424,6 +461,10 @@
             document.getElementById('statLastRun').textContent = data.last_run_at ? fmtDate(data.last_run_at) : 'nunca';
             document.getElementById('statChecked').textContent = data.checked_rules || 0;
             document.getElementById('statSent').textContent = data.notifications_sent || 0;
+        }
+
+        function setTrendStats(data) {
+            document.getElementById('trendStatLastRun').textContent = data.last_run_at ? fmtDate(data.last_run_at) : 'nunca';
         }
 
         async function loadSettings() {
@@ -548,15 +589,118 @@
             loadRules();
         }
 
+        function resetTrendForm() {
+            editingTrendConfigId = null;
+            document.getElementById('trendCountryInput').value = '';
+            document.getElementById('trendCheckEveryInput').value = 10;
+            document.getElementById('trendChannelInput').value = '';
+            document.getElementById('trendEnabledInput').checked = true;
+        }
+
+        function fillTrendForm(config) {
+            editingTrendConfigId = config.id;
+            document.getElementById('trendCountryInput').value = config.country_code || '';
+            document.getElementById('trendCheckEveryInput').value = config.check_every_minutes || 10;
+            document.getElementById('trendChannelInput').value = config.slack_channel || '';
+            document.getElementById('trendEnabledInput').checked = !!config.enabled;
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        async function saveTrendConfig() {
+            var payload = {
+                country_code: document.getElementById('trendCountryInput').value.trim(),
+                check_every_minutes: parseInt(document.getElementById('trendCheckEveryInput').value, 10),
+                slack_channel: document.getElementById('trendChannelInput').value.trim(),
+                enabled: document.getElementById('trendEnabledInput').checked
+            };
+            var path = editingTrendConfigId ? '/api/admin/trends/configs/' + editingTrendConfigId : '/api/admin/trends/configs';
+            var method = editingTrendConfigId ? 'PUT' : 'POST';
+            var res = await api(path, { method: method, body: JSON.stringify(payload) });
+            if (!res) return;
+            if (res.error) { toast(res.error); return; }
+            toast(editingTrendConfigId ? 'Config Trends actualizada' : 'Config Trends creada');
+            resetTrendForm();
+            loadTrendConfigs();
+        }
+
+        async function deleteTrendConfig(id) {
+            if (!confirm('Eliminar la config Trends #' + id + '?')) return;
+            await api('/api/admin/trends/configs/' + id, { method: 'DELETE' });
+            toast('Config Trends eliminada');
+            loadTrendConfigs();
+            if (editingTrendConfigId === id) resetTrendForm();
+        }
+
+        async function loadTrendConfigs() {
+            var configs = await api('/api/admin/trends/configs');
+            if (!configs) return;
+            var root = document.getElementById('trendConfigsList');
+            if (!configs.length) {
+                root.innerHTML = '<div class="empty">No hay configs Trends todavía.</div>';
+                return;
+            }
+            root.innerHTML = configs.map(function(config) {
+                var badge = config.enabled ? '<span class="badge badge-on">Activa</span>' : '<span class="badge badge-off">Pausada</span>';
+                var channel = config.slack_channel ? esc(config.slack_channel) : 'canal por defecto';
+                var error = config.last_error ? '<br>Último error: <span class="mono">' + esc(config.last_error) + '</span>' : '';
+                return '<div class="rule">' +
+                    '<div class="rule-top">' +
+                        '<div>' +
+                            '<div class="rule-name">Google Trends ' + esc(config.country_code) + '</div>' +
+                            '<div class="rule-meta">Ventana fija: <span class="mono">4h</span> · Frecuencia: <span class="mono">' + config.check_every_minutes + ' min</span><br>' +
+                            'Slack: <span class="mono">' + channel + '</span><br>' +
+                            'Último chequeo: <span class="mono">' + esc(fmtDate(config.last_checked_at)) + '</span><br>' +
+                            'Último envío: <span class="mono">' + esc(fmtDate(config.last_sent_at)) + '</span>' + error + '</div>' +
+                        '</div>' + badge +
+                    '</div>' +
+                    '<div class="rule-actions">' +
+                        '<button class="btn js-edit-trend" data-config-id="' + config.id + '">Editar</button>' +
+                        '<button class="btn btn-danger js-delete-trend" data-config-id="' + config.id + '">Eliminar</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+
+            root.querySelectorAll('.js-edit-trend').forEach(function(btn) {
+                btn.onclick = function() {
+                    var id = parseInt(btn.getAttribute('data-config-id'), 10);
+                    var config = configs.find(function(item) { return item.id === id; });
+                    if (config) fillTrendForm(config);
+                };
+            });
+            root.querySelectorAll('.js-delete-trend').forEach(function(btn) {
+                btn.onclick = function() {
+                    var id = parseInt(btn.getAttribute('data-config-id'), 10);
+                    deleteTrendConfig(id);
+                };
+            });
+        }
+
+        async function runTrendAlerts() {
+            var res = await api('/api/admin/trends/run', { method: 'POST' });
+            if (!res) return;
+            setTrendStats(res);
+            if (res.errors && res.errors.length) toast('Trends corrió con errores');
+            else toast('Trends ejecutado');
+            loadTrendConfigs();
+        }
+
         async function pollAlertStatus() {
             var res = await api('/api/admin/alerts/status');
             if (res) setAlertStats(res);
         }
 
+        async function pollTrendStatus() {
+            var res = await api('/api/admin/trends/status');
+            if (res) setTrendStats(res);
+        }
+
         loadSettings();
         loadRules();
+        loadTrendConfigs();
         pollAlertStatus();
+        pollTrendStatus();
         setInterval(pollAlertStatus, 30000);
+        setInterval(pollTrendStatus, 30000);
     </script>
 </body>
 </html>
